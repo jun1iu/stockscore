@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { markNav } from './Motion';
 
 interface Option { ticker: string; name: string }
 
@@ -40,6 +41,7 @@ export function Search({ options, large = false }: { options: Option[]; large?: 
     setQ('');
     setOpen(false);
     input.current?.blur();
+    markNav(`/stocks/${o.ticker}`);
     router.push(`/stocks/${o.ticker}`);
   };
 
