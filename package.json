@@ -10,7 +10,8 @@
     "test": "vitest run",
     "data:fetch": "tsx scripts/fetch-data.ts",
     "data:build": "tsx scripts/build-data.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm test",
     "data:refresh": "tsx scripts/refresh.ts"
   },
   "dependencies": {

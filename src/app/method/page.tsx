@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { FACTORS, MIN_FACTORS } from '@/lib/engine/score';
 
-export const metadata: Metadata = { title: 'Method' };
+export const metadata: Metadata = { title: 'Method', description: 'Every rule the StockScore engine uses: the group, ten measures in five factors, and the point-in-time checks.', alternates: { canonical: '/method' } };
 
 export default function Method() {
   return (

@@ -67,7 +67,10 @@ export async function getMeta() {
 
 export type Meta = Awaited<ReturnType<typeof getMeta>>;
 
-/** Everything the stock page and the API need about one company. */
+/**
+ * Everything the stock page and the API need about one company.
+ * Pass a ticker from `findCompany`: the result is cached per ticker, so unchecked input would grow the cache.
+ */
 export async function stockReport(ticker: string) {
   'use cache';
   cacheLife('hours');
@@ -92,6 +95,8 @@ export async function stockReport(ticker: string) {
     label: e ? scoreLabel(e.score) : null,
     trust: b ? { band: b, outcome: t.bands[b.key], range: t.uncertainty?.bands[b.key] ?? null, horizonMonths: t.horizonMonths, since: t.start } : null,
     history: s.history[ticker] ?? [],
+    // Month-end closes over the same period as the score history, for the price view of the chart.
+    priceHistory: points.filter((p) => p.date >= (s.history[ticker]?.[0]?.date ?? '')).map((p) => ({ date: p.date, close: p.close })),
     change: (await getChanges()).changes[ticker] ?? null,
     // Annual report dates, marked on the score chart.
     reports: c.facts.revenue.filter((f) => f.filed >= (s.history[ticker]?.[0]?.date ?? '2012')).map((f) => f.filed),

@@ -27,12 +27,18 @@ export function usd(x: number): string {
   return `$${x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * "12 Nov 2026" from an ISO date. Spelled out by hand rather than with toLocaleDateString: Node and
+ * browsers disagree on some month names ("Sep" / "Sept"), which would break hydration in client charts.
+ */
 export function date(iso: string): string {
-  return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return `${Number(iso.slice(8, 10))} ${monthYear(iso)}`;
 }
 
 export function monthYear(iso: string): string {
-  return new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  return `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 }
 
 export function metric(def: MetricDef, v: number | null): string {

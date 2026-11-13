@@ -1,10 +1,14 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { BeatChart } from '@/components/charts';
+import { ScoreGrid } from '@/components/ScoreGrid';
 import { Search } from '@/components/Search';
 import { UNIVERSE } from '@/data/universe';
 import { getChanges, getEvaluations, getMeta } from '@/lib/data';
 import { summarize } from '@/lib/engine/explain';
 import { date, pct } from '@/lib/format';
+
+export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 export default async function Home() {
   const [evaluations, meta, { since: changesSince, changes }] = await Promise.all([getEvaluations(), getMeta(), getChanges()]);
@@ -21,6 +25,7 @@ export default async function Home() {
   return (
     <div className="home">
       <section className="home__hero">
+        <div className="home__pitch">
         <p className="eyebrow">Scores from SEC filings, with their track record attached</p>
         <h1>A stock score that tells you how much to trust it.</h1>
         <p className="lede">
@@ -28,6 +33,16 @@ export default async function Home() {
           Next to every score it shows how scores like it have done since {since}.
         </p>
         <Search options={UNIVERSE.map((u) => ({ ticker: u.ticker, name: u.name }))} large />
+        <ul className="home__facts">
+          <li><b>{evaluations.length}</b> companies scored</li>
+          <li><b>{t.observations.toLocaleString('en-US')}</b> past results checked</li>
+          <li>Prices to <b>{date(meta.asOf)}</b></li>
+        </ul>
+        </div>
+        <div className="home__grid">
+          <h2 className="home__gridtitle">All {evaluations.length} scores today</h2>
+          <ScoreGrid tiles={evaluations.map((e) => ({ ticker: e.ticker, name: names[e.ticker], score: e.score, rank: e.rank }))} />
+        </div>
       </section>
 
       <section className="panel home__honest" aria-labelledby="honest">
@@ -40,7 +55,7 @@ export default async function Home() {
           </p>
           <p><Link href="/track-record">See the full track record →</Link></p>
         </div>
-        <BeatChart rows={t.quintiles.map((q, i) => ({ label: q.label.replace(' fifth', ''), outcome: q, range: t.uncertainty?.quintiles[i] }))} height={210} />
+        <BeatChart rows={t.quintiles.map((q, i) => ({ label: q.label.replace(' fifth', ''), outcome: q, range: t.uncertainty?.quintiles[i] }))} />
       </section>
 
       <section className="panel" aria-labelledby="top">
@@ -74,7 +89,7 @@ export default async function Home() {
                 <Link href={`/stocks/${t}`}>
                   <b>{t}</b>
                   <span className="why">{summarize(c)}.</span>
-                  <span className={c.delta >= 0 ? 'up' : 'down'}>{Math.round(c.scoreFrom)} → {Math.round(c.scoreTo)}</span>
+                  <span className={`movers__delta ${c.delta >= 0 ? 'up' : 'down'}`}>{Math.round(c.scoreFrom)} → {Math.round(c.scoreTo)}</span>
                 </Link>
               </li>
             ))}

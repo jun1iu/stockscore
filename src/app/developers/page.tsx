@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SITE_URL as BASE } from '@/lib/site';
 
-export const metadata: Metadata = { title: 'API' };
+export const metadata: Metadata = { title: 'API', description: 'Free JSON API for StockScore: scores, inputs, sources and the track record. No key needed.', alternates: { canonical: '/developers' } };
 
-const BASE = 'https://stockscore.jun-liu.net';
 
 const ENDPOINTS = [
   {

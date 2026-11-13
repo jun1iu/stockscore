@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getMeta } from '@/lib/data';
 import { date } from '@/lib/format';
 
-export const metadata: Metadata = { title: 'Data status' };
+export const metadata: Metadata = { title: 'Data status', description: 'When StockScore’s prices and filings were last refreshed, and what each run did.', alternates: { canonical: '/status' } };
 
 const time = (iso: string) =>
   new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' });

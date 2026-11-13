@@ -10,11 +10,19 @@ Not investment advice.
 
 ## What it does
 
-- **Stock pages** (`/stocks/AAPL`): the score, the trust line for that score range, each factor with its raw figures, formula, rank in the group and a link to the SEC filing, the score's history since 2012, and the track record by score range.
-- **Rankings** (`/rankings`): all scored companies, sortable by any factor and filterable by sector.
+- **Home** (`/`): every score at a glance in a 70-tile grid, the track record in one chart, the top five and the month's biggest moves.
+- **Stock pages** (`/stocks/AAPL`): the score, the trust line for that score range, each factor with its raw figures, formula, rank in the group and a link to the SEC filing, an interactive chart of the score or the share price since 2012 (hover, touch or arrow keys), and the track record by score range.
+- **Rankings** (`/rankings`): all scored companies, sortable either way by score, change or any factor, filterable by sector and by name.
 - **Track record** (`/track-record`): the backtest by score fifth, which factors carried signal, year-by-year rank correlation, and what flatters the numbers.
 - **Method** (`/method`): every rule the engine uses.
 - **API** (`/developers`): `GET /api/stocks`, `/api/stocks/{ticker}`, `/api/track-record`, `/api/status`, `/api/health`.
+
+## Interface
+
+- **Light and dark themes.** Follows the device setting; the header switch overrides it and is remembered. An inline script sets the theme before first paint, so there is no flash.
+- **Readable on a phone.** Charts are drawn at their real width (the bar chart is plain HTML), so labels never shrink; the rankings keep the company column in place while the factors scroll.
+- **Keyboard.** `/` focuses search, the history chart reads out each month with the arrow keys, and every control has a visible focus ring.
+- **Sharing and search engines.** Each page has a canonical link and a generated share image (stock pages show the score), plus `sitemap.xml`, `robots.txt` and a web manifest. Set `NEXT_PUBLIC_SITE_URL` if the site moves.
 
 ## Statistical rigour
 
@@ -30,6 +38,7 @@ Each stock page explains its move since the previous month-end: score and rank b
 - **CI** (`.github/workflows/ci.yml`): types, lint, tests and a full build on every push and pull request.
 - **Health** (`/api/health`, `.github/workflows/health.yml`): 503 when prices are more than five days old or the last refresh failed; a weekday GitHub Action checks it after the refresh and fails, which emails the owner.
 - **Public API** (`/developers`): JSON for everything on the site, open CORS, cached for up to an hour.
+- **Hardening.** Security headers on every response (`next.config.ts`); tickers are checked against the list before any cached lookup, so made-up URLs can't grow the cache; the cron secret is compared in constant time.
 
 ## Live refresh (the backend)
 
@@ -71,6 +80,8 @@ Known limit: the 70 companies were chosen because they are large today, so the b
 ```
 src/lib/engine/   pointInTime, metrics, score, backtest, stats: pure TypeScript, shared by the app and the pipeline
 src/lib/data.ts   loads the data snapshot and scores the group on the server
+src/lib/          chart.ts, rankings.ts, format.ts: pure helpers behind the charts and tables, with tests
+src/components/   charts, the rankings table, search, theme switch
 src/app/          pages and API routes (Next.js App Router)
 scripts/          fetch-data.ts (downloads), build-data.ts (extracts, runs the backtest)
 src/data/         universe.ts and the generated snapshot
@@ -80,7 +91,7 @@ src/data/         universe.ts and the generated snapshot
 
 ```bash
 npm install
-npm test
+npm run check   # types, lint and tests
 npm run dev
 ```
 

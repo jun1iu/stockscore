@@ -1,7 +1,14 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { revalidateTag } from 'next/cache';
 import { SNAPSHOT_TAG } from '@/lib/data';
 import { ConfigError, runRefresh } from '@/lib/pipeline/run';
 import { ConflictError } from '@/lib/pipeline/storage';
+
+/** Compares in constant time, so response timing says nothing about how much of a guess was right. */
+function sameSecret(a: string, b: string): boolean {
+  const digest = (s: string) => createHash('sha256').update(s).digest();
+  return timingSafeEqual(digest(a), digest(b));
+}
 
 /** Paced Massive requests plus the SEC check take a minute or two. */
 export const maxDuration = 300;
@@ -14,7 +21,7 @@ export async function GET(req: Request) {
   // Trimmed on both sides: a pasted secret easily picks up a trailing newline.
   const secret = process.env.CRON_SECRET?.trim();
   const sent = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
-  if (!secret || !sent || sent !== secret) {
+  if (!secret || !sent || !sameSecret(sent, secret)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const trigger = req.headers.get('user-agent')?.includes('stockscore-cron') ? 'cron' : 'manual';
