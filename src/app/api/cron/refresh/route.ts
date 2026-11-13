@@ -11,8 +11,10 @@ export const maxDuration = 300;
  * Vercel Cron calls it daily with `Authorization: Bearer $CRON_SECRET`; the same header works by hand.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {
+  // Trimmed on both sides: a pasted secret easily picks up a trailing newline.
+  const secret = process.env.CRON_SECRET?.trim();
+  const sent = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+  if (!secret || !sent || sent !== secret) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const trigger = req.headers.get('user-agent')?.includes('vercel-cron') ? 'cron' : 'manual';
