@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
+import { flushSync } from 'react-dom';
 import { filterRows, sortRows, type Row, type SortDir, type SortKey } from '@/lib/rankings';
 
 const COLS: { key: SortKey; label: string; long: string }[] = [
@@ -17,6 +18,14 @@ const FACTOR_COLS = COLS.slice(2);
 
 const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
 
+/** Rows glide to their new places when the order or the filter changes, where the browser can do it. */
+function move(update: () => void) {
+  const root = document.documentElement;
+  if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return update();
+  root.setAttribute('data-flip', '');
+  document.startViewTransition(() => flushSync(update)).finished.finally(() => root.removeAttribute('data-flip'));
+}
+
 export function RankingTable({ rows }: { rows: Row[] }) {
   const [sort, setSort] = useState<SortKey>('score');
   const [dir, setDir] = useState<SortDir>('desc');
@@ -26,17 +35,17 @@ export function RankingTable({ rows }: { rows: Row[] }) {
   const shown = useMemo(() => sortRows(filterRows(rows, sector, query), sort, dir), [rows, sector, query, sort, dir]);
   const col = COLS.find((c) => c.key === sort)!;
 
-  const sortBy = (key: SortKey) => {
+  const sortBy = (key: SortKey) => move(() => {
     if (key === sort) setDir((d) => (d === 'desc' ? 'asc' : 'desc'));
     else { setSort(key); setDir('desc'); }
-  };
+  });
 
   return (
     <div className="panel rankings">
       <div className="rankings__tools">
         <div className="filters" role="group" aria-label="Sector">
           {sectors.map((s) => (
-            <button key={s} type="button" className="chip" aria-pressed={sector === s} onClick={() => setSector(s)}>{s}</button>
+            <button key={s} type="button" className="chip" aria-pressed={sector === s} onClick={() => move(() => setSector(s))}>{s}</button>
           ))}
         </div>
         <input
@@ -54,7 +63,7 @@ export function RankingTable({ rows }: { rows: Row[] }) {
       {shown.length === 0 ? (
         <p className="rankings__empty">
           Nothing matches.{' '}
-          <button type="button" className="linkish" onClick={() => { setSector('All'); setQuery(''); }}>Clear the filters</button>
+          <button type="button" className="linkish" onClick={() => move(() => { setSector('All'); setQuery(''); })}>Clear the filters</button>
         </p>
       ) : (
         <div className="tablewrap">
@@ -77,7 +86,7 @@ export function RankingTable({ rows }: { rows: Row[] }) {
               {shown.map((r) => {
                 const d = r.delta === null ? null : Math.round(r.delta);
                 return (
-                  <tr key={r.ticker}>
+                  <tr key={r.ticker} style={{ '--vt': `row-${r.ticker.replace(/[^A-Za-z0-9]/g, '-')}` } as CSSProperties}>
                     <td className="num muted">{r.rank}</td>
                     <th scope="row" className="table__sticky">
                       <Link href={`/stocks/${r.ticker}`}><b>{r.ticker}</b> <span className="muted">{r.name}</span></Link>

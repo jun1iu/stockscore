@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import Link from 'next/link';
 import { Search } from '@/components/Search';
 import { NavLinks } from '@/components/NavLinks';
+import { Motion } from '@/components/Motion';
 import { THEME_SCRIPT, ThemeToggle } from '@/components/ThemeToggle';
 import { SITE_DESCRIPTION, SITE_URL } from '@/lib/site';
 import { UNIVERSE } from '@/data/universe';
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           </p>
           <p>Data: SEC EDGAR filings; prices from Massive, with history before November 2026 from Yahoo Finance. <Link href="/status">Data status</Link> · <Link href="/developers">API</Link>.</p>
         </footer>
+        <Motion />
       </body>
     </html>
   );

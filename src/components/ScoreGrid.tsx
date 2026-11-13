@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 
 export interface Tile { ticker: string; name: string; score: number; rank: number }
@@ -10,8 +11,8 @@ export function ScoreGrid({ tiles }: { tiles: Tile[] }) {
   return (
     <figure className="grid70">
       <ol className="grid70__tiles">
-        {tiles.map((t) => (
-          <li key={t.ticker}>
+        {tiles.map((t, i) => (
+          <li key={t.ticker} style={{ '--d': (i % 10) + Math.floor(i / 10) } as CSSProperties}>
             <Link href={`/stocks/${t.ticker}`} data-step={Math.min(4, Math.floor(t.score / 20))} title={`${t.name}: ${Math.round(t.score)}, rank ${t.rank}`}>
               <b>{t.ticker}</b>
               <span>{Math.round(t.score)}</span>

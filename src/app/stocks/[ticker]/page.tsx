@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { BeatChart, Meter, ScoreRing } from '@/components/charts';
 import { HistoryChart } from '@/components/HistoryChart';
 import { ChangePanel } from '@/components/ChangePanel';
+import { Roll } from '@/components/Roll';
 import { findCompany, UNIVERSE } from '@/data/universe';
 import { getEvaluations, getMeta, secFilingUrl, stockReport } from '@/lib/data';
 import { date, metric, money, monthYear, pct, points, signedPct, usd } from '@/lib/format';
@@ -90,12 +91,12 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
                 </h2>
                 <p className="trust__headline">
                   Since {since}, companies scoring {r.trust.band.lo}–{r.trust.band.hi} beat the S&amp;P 500 over the next year{' '}
-                  <strong>{pct(r.trust.outcome.beat, 0)}</strong> of the time. A coin flip is 50%.
+                  <strong><Roll>{pct(r.trust.outcome.beat, 0)}</Roll></strong> of the time. A coin flip is 50%.
                   {r.trust.range && (
                     <span className="trust__range"> Allowing for luck, the true rate is likely between {pct(r.trust.range[0], 0)} and {pct(r.trust.range[1], 0)}{r.trust.range[0] <= 0.5 && r.trust.range[1] >= 0.5 ? ', a range that includes the coin flip.' : '.'}</span>
                   )}
                 </p>
-                <div className="coin" aria-hidden="true">
+                <div className="coin" data-anim aria-hidden="true">
                   <div className="coin__row"><span>Scores {r.trust.band.lo}–{r.trust.band.hi}</span><span className="coin__track"><span className="coin__fill is-on" style={{ width: `${r.trust.outcome.beat * 100}%` }} /></span><b>{pct(r.trust.outcome.beat, 0)}</b></div>
                   <div className="coin__row"><span>Coin flip</span><span className="coin__track"><span className="coin__fill" style={{ width: '50%' }} /></span><b>50%</b></div>
                 </div>
@@ -174,7 +175,7 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
             </section>
           </div>
 
-          <nav className="neighbours" aria-label="Nearby in the rankings">
+          <nav className="neighbours" data-anim aria-label="Nearby in the rankings">
             <span className="neighbours__label muted small">Nearby in the rankings</span>
             {near.map((n) => (
               <Link key={n.ticker} href={`/stocks/${n.ticker}`}>

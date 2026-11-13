@@ -64,8 +64,8 @@ export function HistoryChart({ ticker, score, price, reports = [] }: Props) {
   const label = mode === 'score' ? 'score' : 'share price';
 
   return (
-    <div className="history">
-      <div className="seg" role="group" aria-label="What to plot">
+    <div className="history" data-anim>
+      <div className="seg" role="group" aria-label="What to plot" data-on={mode === 'score' ? 0 : 1}>
         <button type="button" aria-pressed={mode === 'score'} onClick={() => { setMode('score'); setAt(null); }}>Score</button>
         <button type="button" aria-pressed={mode === 'price'} onClick={() => { setMode('price'); setAt(null); }}>Share price</button>
       </div>
@@ -108,15 +108,16 @@ export function HistoryChart({ ticker, score, price, reports = [] }: Props) {
             const i = points.findIndex((p) => p.date >= r);
             return i < 0 ? null : <line key={r} x1={x(i)} x2={x(i)} y1={PAD.t} y2={H - PAD.b} className="chart__report" />;
           })}
-          <path d={area} fill={`url(#fill-${ticker})`} />
-          <path d={line} className="chart__line" />
-          {shown ? (
+          <g key={mode}>
+            <path d={area} fill={`url(#fill-${ticker})`} className="chart__area" />
+            <path d={line} pathLength={1} className="chart__line" />
+            <circle cx={xs[n - 1]} cy={ys[n - 1]} r="4.5" className="chart__dot chart__dot--end" style={shown ? { opacity: 0 } : undefined} />
+          </g>
+          {shown && (
             <>
               <line x1={shownX} x2={shownX} y1={PAD.t} y2={H - PAD.b} className="chart__cross" />
               <circle cx={shownX} cy={y(shown.v)} r="5" className="chart__dot" />
             </>
-          ) : (
-            <circle cx={xs[n - 1]} cy={ys[n - 1]} r="4.5" className="chart__dot" />
           )}
           {years.map((p) => (
             <text key={p.y} x={x(p.i)} y={H - 6} textAnchor="middle" className="chart__axis">{p.y}</text>
