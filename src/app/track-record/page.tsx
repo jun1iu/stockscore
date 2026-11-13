@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Roll } from '@/components/Roll';
 import { BeatChart } from '@/components/charts';
 import { getMeta } from '@/lib/data';
 import { FACTORS } from '@/lib/engine/score';
@@ -35,10 +36,10 @@ export default async function TrackRecordPage() {
       </header>
 
       <section className="stats" aria-label="Summary">
-        <p className="stat"><b>{pct(top.beat, 0)}</b><span>of top-fifth scores beat the S&amp;P 500 over the next year{u && <> · 95% range {range(u.quintiles[4])}</>}</span></p>
-        <p className="stat"><b>{pct(bottom.beat, 0)}</b><span>of bottom-fifth scores did{u && <> · 95% range {range(u.quintiles[0])}</>}</span></p>
-        <p className="stat"><b>{t.ic.toFixed(2)}</b><span>rank correlation between score and next-year result (0 is none, 1 is perfect){u && <> · 95% range {u.ic[0].toFixed(2)} to {u.ic[1].toFixed(2)}</>}</span></p>
-        <p className="stat"><b>{t.icTStat.toFixed(1)}</b><span>t-statistic over yearly windows; below 2 means the pattern could be chance</span></p>
+        <p className="stat"><b><Roll>{pct(top.beat, 0)}</Roll></b><span>of top-fifth scores beat the S&amp;P 500 over the next year{u && <> · 95% range {range(u.quintiles[4])}</>}</span></p>
+        <p className="stat"><b><Roll>{pct(bottom.beat, 0)}</Roll></b><span>of bottom-fifth scores did{u && <> · 95% range {range(u.quintiles[0])}</>}</span></p>
+        <p className="stat"><b><Roll>{t.ic.toFixed(2)}</Roll></b><span>rank correlation between score and next-year result (0 is none, 1 is perfect){u && <> · 95% range {u.ic[0].toFixed(2)} to {u.ic[1].toFixed(2)}</>}</span></p>
+        <p className="stat"><b><Roll>{t.icTStat.toFixed(1)}</Roll></b><span>t-statistic over yearly windows; below 2 means the pattern could be chance</span></p>
       </section>
 
       <section className="panel verdict-text">
@@ -72,7 +73,7 @@ export default async function TrackRecordPage() {
         <section className="panel" aria-labelledby="factors">
           <h2 id="factors">Which measures carried signal</h2>
           <p className="muted">Average monthly rank correlation of each measure with the next-year result. Bars right of the line did better.</p>
-          <ul className="icbars">
+          <ul className="icbars" data-anim>
             {FACTORS.map((f) => {
               const v = t.factorIc[f.key];
               return (
@@ -88,7 +89,7 @@ export default async function TrackRecordPage() {
           </ul>
           <h3>Year by year</h3>
           <p className="muted small">Scores taken each December, judged against the following twelve months.</p>
-          <ul className="icbars">
+          <ul className="icbars" data-anim>
             {t.icYearly.map((y) => (
               <li key={y.date}>
                 <span>{y.date.slice(0, 4)}</span>

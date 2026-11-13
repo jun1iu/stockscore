@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import type { Metadata } from 'next';
 import { BeatChart } from '@/components/charts';
 import { ScoreGrid } from '@/components/ScoreGrid';
+import { Roll } from '@/components/Roll';
 import { Search } from '@/components/Search';
 import { UNIVERSE } from '@/data/universe';
 import { getChanges, getEvaluations, getMeta } from '@/lib/data';
@@ -27,15 +29,19 @@ export default async function Home() {
       <section className="home__hero">
         <div className="home__pitch">
         <p className="eyebrow">Scores from SEC filings, with their track record attached</p>
-        <h1>A stock score that tells you how much to trust it.</h1>
+        <h1 className="words">
+          {'A stock score that tells you how much to trust it.'.split(' ').map((w, i) => (
+            <span key={i} style={{ '--i': i } as CSSProperties}>{w} </span>
+          ))}
+        </h1>
         <p className="lede">
           StockScore ranks 70 large US companies on profitability, growth, value, balance sheet and momentum, using their annual reports.
           Next to every score it shows how scores like it have done since {since}.
         </p>
         <Search options={UNIVERSE.map((u) => ({ ticker: u.ticker, name: u.name }))} large />
         <ul className="home__facts">
-          <li><b>{evaluations.length}</b> companies scored</li>
-          <li><b>{t.observations.toLocaleString('en-US')}</b> past results checked</li>
+          <li><b><Roll>{String(evaluations.length)}</Roll></b> companies scored</li>
+          <li><b><Roll>{t.observations.toLocaleString('en-US')}</Roll></b> past results checked</li>
           <li>Prices to <b>{date(meta.asOf)}</b></li>
         </ul>
         </div>
@@ -63,7 +69,7 @@ export default async function Home() {
           <h2 id="top">Highest scores today</h2>
           <Link href="/rankings">All 70 →</Link>
         </div>
-        <ol className="toplist">
+        <ol className="toplist" data-anim>
           {top.map((e) => (
             <li key={e.ticker}>
               <Link href={`/stocks/${e.ticker}`}>
@@ -83,7 +89,7 @@ export default async function Home() {
           <div className="panel__head row">
             <h2 id="movers">Biggest moves since {date(changesSince)}</h2>
           </div>
-          <ol className="movers">
+          <ol className="movers" data-anim>
             {movers.map(([t, c]) => (
               <li key={t}>
                 <Link href={`/stocks/${t}`}>
