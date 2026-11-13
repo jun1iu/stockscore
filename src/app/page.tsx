@@ -2,11 +2,15 @@ import Link from 'next/link';
 import { BeatChart } from '@/components/charts';
 import { Search } from '@/components/Search';
 import { UNIVERSE } from '@/data/universe';
-import { getEvaluations, getMeta } from '@/lib/data';
+import { getChanges, getEvaluations, getMeta } from '@/lib/data';
+import { summarize } from '@/lib/engine/explain';
 import { date, pct } from '@/lib/format';
 
 export default async function Home() {
-  const [evaluations, meta] = await Promise.all([getEvaluations(), getMeta()]);
+  const [evaluations, meta, { since: changesSince, changes }] = await Promise.all([getEvaluations(), getMeta(), getChanges()]);
+  const movers = Object.entries(changes)
+    .sort((a, b) => Math.abs(b[1].delta) - Math.abs(a[1].delta))
+    .slice(0, 5);
   const top = evaluations.slice(0, 5);
   const t = meta.trackRecord;
   const topFifth = t.quintiles.at(-1)!;
@@ -58,6 +62,25 @@ export default async function Home() {
         </ol>
         <p className="muted small">Prices as of {date(meta.asOf)}. A high score means strong figures relative to this group, not a reason to buy.</p>
       </section>
+
+      {movers.length > 0 && (
+        <section className="panel" aria-labelledby="movers">
+          <div className="panel__head row">
+            <h2 id="movers">Biggest moves since {date(changesSince)}</h2>
+          </div>
+          <ol className="movers">
+            {movers.map(([t, c]) => (
+              <li key={t}>
+                <Link href={`/stocks/${t}`}>
+                  <b>{t}</b>
+                  <span className="why">{summarize(c)}.</span>
+                  <span className={c.delta >= 0 ? 'up' : 'down'}>{Math.round(c.scoreFrom)} → {Math.round(c.scoreTo)}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
     </div>
   );
 }

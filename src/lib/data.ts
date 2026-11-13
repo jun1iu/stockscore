@@ -2,6 +2,7 @@ import 'server-only';
 import { cacheLife, cacheTag } from 'next/cache';
 import { BENCHMARK, UNIVERSE } from '@/data/universe';
 import { band, FACTORS, scoreGroup, scoreLabel } from './engine/score';
+import { explainChange, type ScoreChange } from './engine/explain';
 import type { Evaluation } from './engine/types';
 import { bundledSnapshot } from './pipeline/bundled';
 import type { Snapshot } from './pipeline/snapshot';
@@ -31,6 +32,28 @@ export async function getEvaluations(): Promise<Evaluation[]> {
   cacheTag(SNAPSHOT_TAG);
   const s = await loadSnapshot();
   return scoreGroup(s.companies, s.prices, s.asOf).sort((a, b) => a.rank - b.rank);
+}
+
+/** The month-end before the latest prices: the date "what changed" compares against. */
+function previousMonthEnd(asOf: string): string {
+  const d = new Date(asOf + 'T00:00:00Z');
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0)).toISOString().slice(0, 10);
+}
+
+/** How every score moved since the previous month-end, keyed by ticker. */
+export async function getChanges(): Promise<{ since: string; changes: Record<string, ScoreChange> }> {
+  'use cache';
+  cacheLife('hours');
+  cacheTag(SNAPSHOT_TAG);
+  const s = await loadSnapshot();
+  const since = previousMonthEnd(s.asOf);
+  const before = new Map(scoreGroup(s.companies, s.prices, since).map((e) => [e.ticker, e]));
+  const changes: Record<string, ScoreChange> = {};
+  for (const e of await getEvaluations()) {
+    const c = explainChange(before.get(e.ticker), e, since);
+    if (c) changes[e.ticker] = c;
+  }
+  return { since, changes };
 }
 
 /** Dates, track record and refresh history: everything except the bulk data. */
@@ -69,6 +92,9 @@ export async function stockReport(ticker: string) {
     label: e ? scoreLabel(e.score) : null,
     trust: b ? { band: b, outcome: t.bands[b.key], range: t.uncertainty?.bands[b.key] ?? null, horizonMonths: t.horizonMonths, since: t.start } : null,
     history: s.history[ticker] ?? [],
+    change: (await getChanges()).changes[ticker] ?? null,
+    // Annual report dates, marked on the score chart.
+    reports: c.facts.revenue.filter((f) => f.filed >= (s.history[ticker]?.[0]?.date ?? '2012')).map((f) => f.filed),
     factors: FACTORS,
   };
 }

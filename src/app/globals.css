@@ -111,7 +111,7 @@ code { font-size: 0.9em; background: var(--panel-2); padding: 0.1em 0.35em; bord
 /* ---------- Layout ---------- */
 .main { flex: 1; width: min(100%, 76rem); margin-inline: auto; padding: clamp(1.25rem, 3vw, 2rem) var(--gutter) 3rem; }
 .panel { background: linear-gradient(180deg, var(--panel), var(--bg-2)); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1rem, 2.4vw, 1.5rem); }
-.panel + .panel, .panel + .two, .two + .panel, .two + .neighbours, .verdict + .panel, .stats + .panel, .page__head + .panel, .home__hero + .panel { margin-top: 1.25rem; }
+.panel + .panel, .panel + .two, .two + .panel, .two + .neighbours, .verdict + .panel, .change + .panel, .stats + .panel, .page__head + .panel, .home__hero + .panel { margin-top: 1.25rem; }
 .panel h2 { font-size: 1.25rem; font-weight: 650; letter-spacing: -0.01em; }
 .panel h3 { font-size: 1rem; margin-top: 1.25rem; }
 .panel > p + p, .panel h2 + p { margin-top: 0.5rem; }
@@ -203,6 +203,18 @@ code { font-size: 0.9em; background: var(--panel-2); padding: 0.1em 0.35em; bord
 .chart__val.is-on-ink { fill: var(--accent-ink); }
 .chart__line { fill: none; stroke: var(--text); stroke-width: 2; stroke-linejoin: round; }
 .chart__dot { fill: var(--accent); }
+.chart__report { stroke: var(--line-2); stroke-width: 1; }
+.change__delta { font-size: 1.5rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.change__delta span { font-size: 1rem; }
+.change__summary { max-width: 52rem; }
+.change__list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.change__list li { padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.change__metrics { display: flex; flex-wrap: wrap; gap: 0.15rem 1.25rem; margin-top: 0.2rem; color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.movers { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.movers a { display: grid; grid-template-columns: 4.5rem 1fr auto; gap: 0.75rem; align-items: baseline; padding: 0.6rem 0.75rem; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; background: var(--bg-2); }
+.movers a:hover { border-color: var(--line-2); }
+.movers .why { color: var(--muted); font-size: 0.9rem; }
+.chart__legend .chart__legend-report { width: 0; height: 0.9rem; margin-left: 0.75rem; border-left: 1px solid var(--line-2); }
 
 .neighbours { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.25rem; }
 .neighbours a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 10px; color: var(--text); text-decoration: none; background: var(--panel); }

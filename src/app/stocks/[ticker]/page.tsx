@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BeatChart, Meter, ScoreHistory, ScoreRing } from '@/components/charts';
+import { ChangePanel } from '@/components/ChangePanel';
 import { UNIVERSE } from '@/data/universe';
 import { getEvaluations, getMeta, secFilingUrl, stockReport } from '@/lib/data';
 import { date, metric, money, monthYear, pct, points, signedPct, usd } from '@/lib/format';
@@ -95,6 +96,8 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
             )}
           </section>
 
+          {r.change && <ChangePanel change={r.change} />}
+
           <section className="panel" aria-labelledby="breakdown">
             <div className="panel__head">
               <h2 id="breakdown">Score breakdown</h2>
@@ -149,7 +152,8 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
             <section className="panel" aria-labelledby="history">
               <h2 id="history">Score over time</h2>
               <p className="muted">Each month-end since {monthYear(r.history[0]?.date ?? trackRecord.start)}, using only the filings and prices public that day.</p>
-              <ScoreHistory points={r.history} ticker={r.ticker} />
+              <ScoreHistory points={r.history} ticker={r.ticker} reports={r.reports} />
+              <p className="chart__legend"><i className="chart__legend-report" aria-hidden="true" /> Annual report filed</p>
             </section>
             <section className="panel" aria-labelledby="record">
               <h2 id="record">Track record by score</h2>

@@ -42,7 +42,7 @@ export function BeatChart({ rows, highlight, height = 200 }: { rows: { label: st
           return (
             <g key={r.label}>
               <rect x={x} y={y(r.outcome.beat)} width={barW} height={y(0) - y(r.outcome.beat)} rx="3" className={on ? 'chart__bar is-on' : 'chart__bar'} />
-              <text x={x + barW / 2} y={y(r.outcome.beat) + 18} textAnchor="middle" className={on ? 'chart__val is-on-ink' : 'chart__val'}>{pct(r.outcome.beat, 0)}</text>
+              <text x={x + barW / 2} y={y(0) - 10} textAnchor="middle" className={on ? 'chart__val is-on-ink' : 'chart__val'}>{pct(r.outcome.beat, 0)}</text>
               {r.range && (
                 <g className="chart__range">
                   <line x1={x + barW / 2} x2={x + barW / 2} y1={y(r.range[1])} y2={y(r.range[0])} />
@@ -65,7 +65,7 @@ export function BeatChart({ rows, highlight, height = 200 }: { rows: { label: st
 }
 
 /** A company's score at every month-end, worked out with what was known then. */
-export function ScoreHistory({ points, ticker }: { points: { date: string; score: number }[]; ticker: string }) {
+export function ScoreHistory({ points, ticker, reports = [] }: { points: { date: string; score: number }[]; ticker: string; reports?: string[] }) {
   if (points.length < 2) return <p className="muted">Not enough history yet.</p>;
   const W = 520;
   const H = 180;
@@ -83,6 +83,12 @@ export function ScoreHistory({ points, ticker }: { points: { date: string; score
           <text x="0" y={y(s) + 4} className="chart__axis">{s}</text>
         </g>
       ))}
+      {reports.map((r) => {
+        // Place each filing between the month-ends around it.
+        const i = points.findIndex((p) => p.date >= r);
+        if (i < 0) return null;
+        return <line key={r} x1={x(i)} x2={x(i)} y1={pad.t} y2={H - pad.b} className="chart__report" />;
+      })}
       <path d={d} className="chart__line" />
       <circle cx={x(points.length - 1)} cy={y(last.score)} r="4.5" className="chart__dot" />
       {years.map((p) => (
