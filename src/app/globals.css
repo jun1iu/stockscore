@@ -268,6 +268,11 @@ code { font-size: 0.9em; background: var(--panel-2); padding: 0.1em 0.35em; bord
 .icbar__neg { right: 50%; background: var(--line-2); }
 
 /* ---------- Footer ---------- */
+.endpoint h2 { display: flex; align-items: center; gap: 0.6rem; font-size: 1.125rem; }
+.endpoint h2 code { background: none; padding: 0; font-size: 1em; }
+.endpoint__method { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: var(--accent-ink); background: var(--accent); border-radius: 6px; padding: 0.15rem 0.45rem; }
+.code { margin: 0.75rem 0 0; padding: 0.85rem 1rem; overflow-x: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; font-size: 0.8125rem; line-height: 1.5; }
+.code code { background: none; padding: 0; white-space: pre; }
 .footer { padding: 1.5rem var(--gutter) 2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.8125rem; display: grid; gap: 0.35rem; }
 
 /* ---------- Narrow screens ---------- */

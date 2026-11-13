@@ -14,7 +14,22 @@ Not investment advice.
 - **Rankings** (`/rankings`): all scored companies, sortable by any factor and filterable by sector.
 - **Track record** (`/track-record`): the backtest by score fifth, which factors carried signal, year-by-year rank correlation, and what flatters the numbers.
 - **Method** (`/method`): every rule the engine uses.
-- **API**: `GET /api/stocks`, `GET /api/stocks/{ticker}`, `GET /api/track-record`.
+- **API** (`/developers`): `GET /api/stocks`, `/api/stocks/{ticker}`, `/api/track-record`, `/api/status`, `/api/health`.
+
+## Statistical rigour
+
+- **95% ranges on every trust figure.** Twelve-month results a month apart overlap, and a bad year hits every company at once, so the bootstrap resamples whole calendar years (2,000 times, seeded so results are reproducible). Where a range includes 50%, the result can't be told apart from a coin flip, and the site says so.
+- **Alternative engines, judged out of sample.** The live equal-weight engine is compared with a sector-neutral version and a walk-forward version that learns factor weights only from years before each test year (with a one-year gap, so no twelve-month result overlaps). All three are scored on the same unseen years, 2016–2025. Tests check the learned weights can't see the years they're judged on (`src/lib/engine/rigour.test.ts`).
+
+## What changed
+
+Each stock page explains its move since the previous month-end: score and rank before and after, the factors that moved most and the figures behind them, and the cause, whether a new annual report, price moves, or other companies changing (scores are ranks). The score chart marks annual report filings, and the home page lists the biggest moves.
+
+## Production
+
+- **CI** (`.github/workflows/ci.yml`): types, lint, tests and a full build on every push and pull request.
+- **Health** (`/api/health`, `.github/workflows/health.yml`): 503 when prices are more than five days old or the last refresh failed; a weekday GitHub Action checks it after the refresh and fails, which emails the owner.
+- **Public API** (`/developers`): JSON for everything on the site, open CORS, cached for up to an hour.
 
 ## Live refresh (the backend)
 
