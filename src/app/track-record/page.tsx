@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BeatChart } from '@/components/charts';
-import { trackRecord as t } from '@/lib/data';
+import { getMeta } from '@/lib/data';
 import { FACTORS } from '@/lib/engine/score';
 import { monthYear, pct, points } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Track record' };
 
-export default function TrackRecordPage() {
+export default async function TrackRecordPage() {
+  const t = (await getMeta()).trackRecord;
   const since = t.start.slice(0, 4);
   const top = t.quintiles.at(-1)!;
   const bottom = t.quintiles[0];

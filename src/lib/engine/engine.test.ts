@@ -5,7 +5,7 @@ import { asOf, sharesInTodaysUnits, yearsBefore } from './pointInTime';
 import { band, scoreGroup } from './score';
 import { percentiles, spearman, summarize } from './stats';
 import type { Company, Fact, Facts, PriceHistory } from './types';
-import { extractFacts } from '../../../scripts/build-data';
+import { extractFacts } from '../pipeline/sec-facts';
 
 const fact = (end: string, filed: string, val: number): Fact => ({ end, filed, val, accn: `a-${end}-${filed}`, form: '10-K' });
 

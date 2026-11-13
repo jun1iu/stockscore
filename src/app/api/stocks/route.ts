@@ -1,13 +1,15 @@
 import { UNIVERSE } from '@/data/universe';
-import { asOfDate, evaluations } from '@/lib/data';
+import { getEvaluations, getMeta } from '@/lib/data';
 
 /** GET /api/stocks: today's ranking of every scored company. */
-export function GET() {
+export async function GET() {
+  const [evaluations, meta] = await Promise.all([getEvaluations(), getMeta()]);
   const names = Object.fromEntries(UNIVERSE.map((u) => [u.ticker, u]));
   return Response.json({
-    asOf: asOfDate,
+    asOf: meta.asOf,
+    builtAt: meta.builtAt,
     note: 'Scores summarise public filings and prices. They are not investment advice.',
-    stocks: evaluations().map((e) => ({
+    stocks: evaluations.map((e) => ({
       ticker: e.ticker,
       name: names[e.ticker].name,
       sector: names[e.ticker].sector,

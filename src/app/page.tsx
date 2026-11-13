@@ -2,12 +2,13 @@ import Link from 'next/link';
 import { BeatChart } from '@/components/charts';
 import { Search } from '@/components/Search';
 import { UNIVERSE } from '@/data/universe';
-import { asOfDate, evaluations, trackRecord } from '@/lib/data';
+import { getEvaluations, getMeta } from '@/lib/data';
 import { date, pct } from '@/lib/format';
 
-export default function Home() {
-  const top = evaluations().slice(0, 5);
-  const t = trackRecord;
+export default async function Home() {
+  const [evaluations, meta] = await Promise.all([getEvaluations(), getMeta()]);
+  const top = evaluations.slice(0, 5);
+  const t = meta.trackRecord;
   const topFifth = t.quintiles.at(-1)!;
   const bottomFifth = t.quintiles[0];
   const since = t.start.slice(0, 4);
@@ -55,7 +56,7 @@ export default function Home() {
             </li>
           ))}
         </ol>
-        <p className="muted small">Prices as of {date(asOfDate)}. A high score means strong figures relative to this group, not a reason to buy.</p>
+        <p className="muted small">Prices as of {date(meta.asOf)}. A high score means strong figures relative to this group, not a reason to buy.</p>
       </section>
     </div>
   );

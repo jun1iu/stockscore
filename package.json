@@ -10,9 +10,11 @@
     "test": "vitest run",
     "data:fetch": "tsx scripts/fetch-data.ts",
     "data:build": "tsx scripts/build-data.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "data:refresh": "tsx scripts/refresh.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^2.9.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",

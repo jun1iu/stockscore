@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
             StockScore summarises public filings and prices. It is not investment advice and does not recommend buying or
             selling anything. Built by <a href="https://jun-liu.net">Jun Liu</a>.
           </p>
-          <p>Data: SEC EDGAR company facts and Yahoo Finance monthly prices.</p>
+          <p>Data: SEC EDGAR filings; prices from Massive, with history before November 2026 from Yahoo Finance. <Link href="/status">Data status</Link>.</p>
         </footer>
       </body>
     </html>

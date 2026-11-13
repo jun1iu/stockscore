@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Raw downloads (rebuilt with npm run data:fetch)
 /data/raw/
+
+# Local live-refresh snapshot
+/data/snapshot.json

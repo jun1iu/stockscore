@@ -16,6 +16,20 @@ Not investment advice.
 - **Method** (`/method`): every rule the engine uses.
 - **API**: `GET /api/stocks`, `GET /api/stocks/{ticker}`, `GET /api/track-record`.
 
+## Live refresh (the backend)
+
+A scheduled job on Vercel (`/api/cron/refresh`, weekdays at 07:17 UTC) keeps the data current:
+
+1. **Prices** from [Massive](https://massive.com) (formerly Polygon.io). One market-wide call returns every US stock's close for a day, so all 70 companies cost one request. Splits and dividends are fetched market-wide too; dividends only for days not yet checked, kept on the snapshot.
+2. **Month-ends.** When a month ends, its last trading day's close becomes that month's price, and the total return adds the dividends paid in the month. Checked against Yahoo for October 2026: closes match exactly; total returns match within 0.05 points for 66 of 71 tickers and within 0.2 for the rest (Yahoo reinvests on the ex-date).
+3. **Splits** restate earlier prices in post-split units and extend the list used to convert filing share counts.
+4. **Annual reports.** Each company's SEC filing index is checked; only companies with a new 10-K are re-read. A report not yet in the SEC's XBRL feed waits for the next run.
+5. **Re-score and re-grade** all 70 companies, then write the snapshot to a private Vercel Blob and invalidate the cached pages.
+
+Design choices: the refresh is a pure function of (old snapshot, data services, clock), so it's tested with fakes (`src/lib/pipeline/refresh.test.ts`); running it twice changes nothing; writes are conditional on the version read, so overlapping runs can't overwrite each other; requests are paced under Massive's free limit (5 a minute); and a time budget saves progress and resumes next run instead of hitting the 300-second limit. `/status` shows what each run did.
+
+Environment variables on Vercel: `MASSIVE_API_KEY`, `CRON_SECRET` (Vercel sends it to the cron route), `SEC_USER_AGENT` (the SEC asks for a name and contact email), and `BLOB_READ_WRITE_TOKEN` (added when a Blob store is connected).
+
 ## How the engine works
 
 | Factor | Measures |
@@ -55,11 +69,17 @@ npm test
 npm run dev
 ```
 
-Refreshing the data:
+Running the live refresh locally (writes `data/snapshot.json`):
+
+```bash
+MASSIVE_API_KEY=... SEC_USER_AGENT="StockScore your@email" npm run data:refresh
+```
+
+Rebuilding the bundled snapshot from scratch:
 
 ```bash
 SEC_USER_AGENT="StockScore your@email" npm run data:fetch   # SEC asks for a contact address; Yahoo is rate-limited, so this is slow
 npm run data:build                                           # writes src/data/generated/ and prints the track record
 ```
 
-Data: [SEC EDGAR company facts](https://www.sec.gov/edgar/sec-api-documentation) and Yahoo Finance monthly prices.
+Data: [SEC EDGAR](https://www.sec.gov/edgar/sec-api-documentation), [Massive](https://massive.com) daily prices, and Yahoo Finance monthly history before November 2026.

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BeatChart, Meter, ScoreHistory, ScoreRing } from '@/components/charts';
 import { UNIVERSE } from '@/data/universe';
-import { evaluations, secFilingUrl, stockReport, trackRecord } from '@/lib/data';
+import { getEvaluations, getMeta, secFilingUrl, stockReport } from '@/lib/data';
 import { date, metric, money, monthYear, pct, points, signedPct, usd } from '@/lib/format';
 
 export function generateStaticParams() {
@@ -12,7 +12,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<'/stocks/[ticker]'>): Promise<Metadata> {
   const { ticker } = await params;
-  const r = stockReport(ticker.toUpperCase());
+  const r = await stockReport(ticker.toUpperCase());
   if (!r) return { title: 'Not covered' };
   return {
     title: `${r.ticker} ${r.name}`,
@@ -24,8 +24,10 @@ export async function generateMetadata({ params }: PageProps<'/stocks/[ticker]'>
 
 export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'>) {
   const { ticker } = await params;
-  const r = stockReport(ticker.toUpperCase());
+  const r = await stockReport(ticker.toUpperCase());
   if (!r) notFound();
+  const { trackRecord } = await getMeta();
+  const near = await neighbours(r.ticker);
   const e = r.evaluation;
   const bands = Object.entries(trackRecord.bands).map(([label, outcome]) => ({ label: label.replace('-', '–'), outcome }));
   const since = trackRecord.start.slice(0, 4);
@@ -40,10 +42,10 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
         {r.price && (
           <dl className="stock__quote">
             <div><dt>Price</dt><dd className="big">{usd(r.price.price)}</dd></div>
-            {r.price.change1m !== null && (
+            {r.price.changeSinceMonthEnd !== null && (
               <div>
-                <dt>Past month</dt>
-                <dd className={r.price.change1m >= 0 ? 'up' : 'down'}>{signedPct(r.price.change1m)}</dd>
+                <dt>This month</dt>
+                <dd className={r.price.changeSinceMonthEnd >= 0 ? 'up' : 'down'}>{signedPct(r.price.changeSinceMonthEnd)}</dd>
               </div>
             )}
             {e && <div><dt>Market value</dt><dd>{money(e.metrics.marketCap)}</dd></div>}
@@ -155,7 +157,7 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
           </div>
 
           <nav className="neighbours" aria-label="Nearby in the rankings">
-            {neighbours(r.ticker).map((n) => (
+            {near.map((n) => (
               <Link key={n.ticker} href={`/stocks/${n.ticker}`}>
                 <span className="muted">#{n.rank}</span> <b>{n.ticker}</b> <span className="pill">{Math.round(n.score)}</span>
               </Link>
@@ -167,8 +169,8 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
   );
 }
 
-function neighbours(ticker: string) {
-  const all = evaluations();
+async function neighbours(ticker: string) {
+  const all = await getEvaluations();
   const i = all.findIndex((x) => x.ticker === ticker);
   return all.slice(Math.max(0, i - 2), i + 3).filter((x) => x.ticker !== ticker);
 }
