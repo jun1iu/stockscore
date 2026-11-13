@@ -17,7 +17,7 @@ export function bundledSnapshot(): Snapshot {
     source: 'bundled',
     companies: companies as Company[],
     prices: p,
-    trackRecord: track as TrackRecord,
+    trackRecord: track as unknown as TrackRecord,
     history: history as Snapshot['history'],
     runs: [],
   };

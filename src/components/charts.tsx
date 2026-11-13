@@ -16,7 +16,7 @@ export function ScoreRing({ score, size = 168 }: { score: number; size?: number 
 }
 
 /** Share that beat the benchmark, by score range, against the 50% a coin flip would give. */
-export function BeatChart({ rows, highlight, height = 200 }: { rows: { label: string; outcome: Outcome }[]; highlight?: string; height?: number }) {
+export function BeatChart({ rows, highlight, height = 200 }: { rows: { label: string; outcome: Outcome; range?: [number, number] }[]; highlight?: string; height?: number }) {
   const W = 520;
   const left = 36;
   const top = 24;
@@ -29,7 +29,7 @@ export function BeatChart({ rows, highlight, height = 200 }: { rows: { label: st
   const barW = Math.min(64, step * 0.6);
   return (
     <figure>
-      <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={rows.map((r) => `${r.label}: ${pct(r.outcome.beat, 0)} beat the S&P 500`).join('; ')}>
+      <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={rows.map((r) => `${r.label}: ${pct(r.outcome.beat, 0)} beat the S&P 500${r.range ? `, likely between ${pct(r.range[0], 0)} and ${pct(r.range[1], 0)}` : ''}`).join('; ')}>
         {[0, 0.25, 0.5, 0.75].map((t) => (
           <g key={t}>
             <line x1={left} x2={W} y1={y(t)} y2={y(t)} className="chart__grid" />
@@ -43,13 +43,23 @@ export function BeatChart({ rows, highlight, height = 200 }: { rows: { label: st
             <g key={r.label}>
               <rect x={x} y={y(r.outcome.beat)} width={barW} height={y(0) - y(r.outcome.beat)} rx="3" className={on ? 'chart__bar is-on' : 'chart__bar'} />
               <text x={x + barW / 2} y={y(r.outcome.beat) + 18} textAnchor="middle" className={on ? 'chart__val is-on-ink' : 'chart__val'}>{pct(r.outcome.beat, 0)}</text>
+              {r.range && (
+                <g className="chart__range">
+                  <line x1={x + barW / 2} x2={x + barW / 2} y1={y(r.range[1])} y2={y(r.range[0])} />
+                  <line x1={x + barW / 2 - 6} x2={x + barW / 2 + 6} y1={y(r.range[1])} y2={y(r.range[1])} />
+                  <line x1={x + barW / 2 - 6} x2={x + barW / 2 + 6} y1={y(r.range[0])} y2={y(r.range[0])} />
+                </g>
+              )}
               <text x={x + barW / 2} y={H - 8} textAnchor="middle" className="chart__axis">{r.label}</text>
             </g>
           );
         })}
         <line x1={left} x2={W} y1={y(0.5)} y2={y(0.5)} className="chart__coin" />
       </svg>
-      <figcaption className="chart__legend"><i aria-hidden="true" /> 50%: what a coin flip would give</figcaption>
+      <figcaption className="chart__legend">
+        <i aria-hidden="true" /> 50%: what a coin flip would give
+        {rows.some((r) => r.range) && <><b className="chart__legend-range" aria-hidden="true" /> 95% range</>}
+      </figcaption>
     </figure>
   );
 }

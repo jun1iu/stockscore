@@ -13,6 +13,9 @@ export default async function TrackRecordPage() {
   const top = t.quintiles.at(-1)!;
   const bottom = t.quintiles[0];
   const reliable = Math.abs(t.icTStat) >= 2;
+  const u = t.uncertainty;
+  const range = (r: [number, number]) => `${pct(r[0], 0)}–${pct(r[1], 0)}`;
+  const c = t.comparison;
   const maxIc = Math.max(0.1, ...Object.values(t.factorIc).map(Math.abs));
 
   return (
@@ -28,9 +31,9 @@ export default async function TrackRecordPage() {
       </header>
 
       <section className="stats" aria-label="Summary">
-        <p className="stat"><b>{pct(top.beat, 0)}</b><span>of top-fifth scores beat the S&amp;P 500 over the next year</span></p>
-        <p className="stat"><b>{pct(bottom.beat, 0)}</b><span>of bottom-fifth scores did</span></p>
-        <p className="stat"><b>{t.ic.toFixed(2)}</b><span>rank correlation between score and next-year result (0 is none, 1 is perfect)</span></p>
+        <p className="stat"><b>{pct(top.beat, 0)}</b><span>of top-fifth scores beat the S&amp;P 500 over the next year{u && <> · 95% range {range(u.quintiles[4])}</>}</span></p>
+        <p className="stat"><b>{pct(bottom.beat, 0)}</b><span>of bottom-fifth scores did{u && <> · 95% range {range(u.quintiles[0])}</>}</span></p>
+        <p className="stat"><b>{t.ic.toFixed(2)}</b><span>rank correlation between score and next-year result (0 is none, 1 is perfect){u && <> · 95% range {u.ic[0].toFixed(2)} to {u.ic[1].toFixed(2)}</>}</span></p>
         <p className="stat"><b>{t.icTStat.toFixed(1)}</b><span>t-statistic over yearly windows; below 2 means the pattern could be chance</span></p>
       </section>
 
@@ -49,7 +52,7 @@ export default async function TrackRecordPage() {
         <section className="panel" aria-labelledby="fifths">
           <h2 id="fifths">By score fifth</h2>
           <p className="muted">Each month, companies were split into five equal groups by score.</p>
-          <BeatChart rows={t.quintiles.map((q) => ({ label: q.label.replace(' fifth', ''), outcome: q }))} />
+          <BeatChart rows={t.quintiles.map((q, i) => ({ label: q.label.replace(' fifth', ''), outcome: q, range: u?.quintiles[i] }))} />
           <div className="tablewrap">
           <table className="table compact">
             <thead><tr><th>Group</th><th className="num">Beat S&amp;P</th><th className="num">Typical result</th><th className="num">Middle 80% of results</th></tr></thead>
@@ -94,6 +97,63 @@ export default async function TrackRecordPage() {
           </ul>
         </section>
       </div>
+
+      {u && (
+        <section className="panel" aria-labelledby="luck">
+          <h2 id="luck">How much is luck?</h2>
+          <p>
+            A bad year hits every company at once, and twelve-month results a month apart share eleven months, so the {t.observations.toLocaleString('en-US')}{' '}
+            company-months are far from independent. The ranges here come from resampling whole calendar years {u.resamples.toLocaleString('en-US')} times
+            and keeping the middle 95% of the results. Where a range includes 50%, the result can’t be told apart from a coin flip.
+          </p>
+        </section>
+      )}
+
+      {c && (
+        <section className="panel" aria-labelledby="variants">
+          <h2 id="variants">Could a different engine do better?</h2>
+          <p className="muted">
+            Three versions of the engine, each judged only on {c.years[0]}–{c.years[1]} ({c.months} months), years the learned version had not seen
+            when its weights were set.
+          </p>
+          <div className="tablewrap">
+            <table className="table">
+              <thead>
+                <tr><th>Engine</th><th className="num">Top fifth beat S&amp;P</th><th className="num">Bottom fifth</th><th className="num">Rank correlation</th></tr>
+              </thead>
+              <tbody>
+                {c.variants.map((v) => (
+                  <tr key={v.key}>
+                    <th scope="row">{v.label}<span className="muted small variant__desc">{v.description}</span></th>
+                    <td className="num"><b>{pct(v.topBeat, 1)}</b><span className="muted small variant__range">{range(v.topBeatRange)}</span></td>
+                    <td className="num">{pct(v.bottomBeat, 1)}</td>
+                    <td className="num"><b>{v.ic.toFixed(3)}</b><span className="muted small variant__range">{v.icRange[0].toFixed(2)} to {v.icRange[1].toFixed(2)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {(() => {
+            const learned = c.variants.find((v) => v.key === 'learned');
+            const best = [...c.variants].sort((a, b) => b.ic - a.ic)[0];
+            const overlap = c.variants.every((v) => v.icRange[0] < best.icRange[1] && best.icRange[0] < v.icRange[1]);
+            return (
+              <>
+                <p>
+                  {best.label} did best on these years{overlap ? ', but every range overlaps, so none is reliably better than the others. ' : '. '}
+                  The live site keeps equal weights: they were fixed before any testing, so its track record can’t have been tuned to look good.
+                </p>
+                {learned?.weights && (
+                  <p className="muted small">
+                    Weights the learned engine would use today:{' '}
+                    {FACTORS.map((f) => `${f.label} ${Math.round(learned.weights![f.key] * 100)}%`).join(', ')}.
+                  </p>
+                )}
+              </>
+            );
+          })()}
+        </section>
+      )}
 
       <section className="panel" aria-labelledby="limits">
         <h2 id="limits">What flatters or limits these numbers</h2>

@@ -67,7 +67,7 @@ export async function stockReport(ticker: string) {
     price: last ? { price: last.close, date: last.date, changeSinceMonthEnd: prevMonthEnd ? last.adjClose / prevMonthEnd.adjClose - 1 : null } : null,
     evaluation: e,
     label: e ? scoreLabel(e.score) : null,
-    trust: b ? { band: b, outcome: t.bands[b.key], horizonMonths: t.horizonMonths, since: t.start } : null,
+    trust: b ? { band: b, outcome: t.bands[b.key], range: t.uncertainty?.bands[b.key] ?? null, horizonMonths: t.horizonMonths, since: t.start } : null,
     history: s.history[ticker] ?? [],
     factors: FACTORS,
   };

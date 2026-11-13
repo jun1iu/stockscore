@@ -36,7 +36,7 @@ export default async function Home() {
           </p>
           <p><Link href="/track-record">See the full track record →</Link></p>
         </div>
-        <BeatChart rows={t.quintiles.map((q) => ({ label: q.label.replace(' fifth', ''), outcome: q }))} height={210} />
+        <BeatChart rows={t.quintiles.map((q, i) => ({ label: q.label.replace(' fifth', ''), outcome: q, range: t.uncertainty?.quintiles[i] }))} height={210} />
       </section>
 
       <section className="panel" aria-labelledby="top">

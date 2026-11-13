@@ -1,5 +1,6 @@
 import { monthsBefore, priceAt } from './metrics';
 import { band, FACTORS, scoreGroup } from './score';
+import { compareVariants, uncertainty, type BacktestMonth, type Comparison, type Uncertainty } from './rigour';
 import { mean, spearman, stdev, summarize, type Outcome } from './stats';
 import type { Company, FactorKey, PriceHistory } from './types';
 
@@ -42,6 +43,10 @@ export interface TrackRecord {
   quintiles: (Outcome & { label: string })[];
   bands: Record<string, Outcome>;
   overall: Outcome;
+  /** 95% ranges from resampling whole years. */
+  uncertainty?: Uncertainty;
+  /** Alternative engines scored on the same unseen years. */
+  comparison?: Comparison | null;
 }
 
 export interface BacktestResult {
@@ -63,6 +68,8 @@ export function runBacktest(
   const monthly: { date: string; ic: number }[] = [];
   const factorIcs: Record<FactorKey, number[]> = { profitability: [], growth: [], value: [], balanceSheet: [], momentum: [] };
   const byMonth: { score: number; excess: number }[][] = [];
+  const months: BacktestMonth[] = [];
+  const sectorOf = new Map(companies.map((c) => [c.ticker, c.sector]));
 
   for (const date of monthEnds(opts.start, opts.end)) {
     const evals = scoreGroup(companies, prices, date);
@@ -78,6 +85,7 @@ export function runBacktest(
 
     rows.forEach(({ e, excess }) => obs.push({ date, score: e.score, excess }));
     byMonth.push(rows.map(({ e, excess }) => ({ score: e.score, excess })));
+    months.push({ date, rows: rows.map(({ e, excess }) => ({ ticker: e.ticker, sector: sectorOf.get(e.ticker) ?? '', score: e.score, factors: e.factors, excess })) });
     monthly.push({ date, ic: spearman(rows.map((x) => x.e.score), rows.map((x) => x.excess)) });
     for (const f of FACTORS) {
       const fr = rows.filter((x) => x.e.factors[f.key] !== null);
@@ -115,6 +123,8 @@ export function runBacktest(
     quintiles: quintileBuckets.map((b, i) => ({ label: labels[i], ...summarize(b) })),
     bands: Object.fromEntries(Object.entries(bandBuckets).sort().map(([k, v]) => [k, summarize(v)])),
     overall: summarize(obs.map((o) => o.excess)),
+    uncertainty: months.length ? uncertainty(months) : undefined,
+    comparison: compareVariants(months),
   };
   return { record, history };
 }

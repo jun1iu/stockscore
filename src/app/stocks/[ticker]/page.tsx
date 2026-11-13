@@ -29,7 +29,7 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
   const { trackRecord } = await getMeta();
   const near = await neighbours(r.ticker);
   const e = r.evaluation;
-  const bands = Object.entries(trackRecord.bands).map(([label, outcome]) => ({ label: label.replace('-', '–'), outcome }));
+  const bands = Object.entries(trackRecord.bands).map(([key, outcome]) => ({ label: key.replace('-', '–'), outcome, range: trackRecord.uncertainty?.bands[key] }));
   const since = trackRecord.start.slice(0, 4);
 
   return (
@@ -78,6 +78,9 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
                 <p className="trust__headline">
                   Since {since}, companies scoring {r.trust.band.lo}–{r.trust.band.hi} beat the S&amp;P 500 over the next year{' '}
                   <strong>{pct(r.trust.outcome.beat, 0)}</strong> of the time. A coin flip is 50%.
+                  {r.trust.range && (
+                    <span className="trust__range"> Allowing for luck, the true rate is likely between {pct(r.trust.range[0], 0)} and {pct(r.trust.range[1], 0)}{r.trust.range[0] <= 0.5 && r.trust.range[1] >= 0.5 ? ', a range that includes the coin flip.' : '.'}</span>
+                  )}
                 </p>
                 <div className="coin" aria-hidden="true">
                   <div className="coin__row"><span>Scores {r.trust.band.lo}–{r.trust.band.hi}</span><span className="coin__track"><span className="coin__fill is-on" style={{ width: `${r.trust.outcome.beat * 100}%` }} /></span><b>{pct(r.trust.outcome.beat, 0)}</b></div>
