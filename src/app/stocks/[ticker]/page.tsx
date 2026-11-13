@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { BeatChart, Meter, ScoreHistory, ScoreRing } from '@/components/charts';
+import { BeatChart, Meter, ScoreRing } from '@/components/charts';
+import { HistoryChart } from '@/components/HistoryChart';
 import { ChangePanel } from '@/components/ChangePanel';
-import { UNIVERSE } from '@/data/universe';
+import { findCompany, UNIVERSE } from '@/data/universe';
 import { getEvaluations, getMeta, secFilingUrl, stockReport } from '@/lib/data';
 import { date, metric, money, monthYear, pct, points, signedPct, usd } from '@/lib/format';
 
@@ -13,10 +14,12 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<'/stocks/[ticker]'>): Promise<Metadata> {
   const { ticker } = await params;
-  const r = await stockReport(ticker.toUpperCase());
-  if (!r) return { title: 'Not covered' };
+  const company = findCompany(ticker);
+  const r = company && (await stockReport(company.ticker));
+  if (!r) return { title: 'Not covered', robots: { index: false } };
   return {
     title: `${r.ticker} ${r.name}`,
+    alternates: { canonical: `/stocks/${r.ticker}` },
     description: r.evaluation
       ? `${r.name} scores ${Math.round(r.evaluation.score)}/100 against 70 large US companies, with the engine’s track record for that score.`
       : `${r.name} on StockScore.`,
@@ -25,10 +28,16 @@ export async function generateMetadata({ params }: PageProps<'/stocks/[ticker]'>
 
 export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'>) {
   const { ticker } = await params;
-  const r = await stockReport(ticker.toUpperCase());
+  // Checked against the list first, so made-up tickers never reach the cached lookup.
+  const company = findCompany(ticker);
+  const r = company && (await stockReport(company.ticker));
   if (!r) notFound();
-  const { trackRecord } = await getMeta();
-  const near = await neighbours(r.ticker);
+  const [{ trackRecord }, all] = await Promise.all([getMeta(), getEvaluations()]);
+  const i = all.findIndex((x) => x.ticker === r.ticker);
+  const near = i < 0 ? [] : all.slice(Math.max(0, i - 2), i + 3).filter((x) => x.ticker !== r.ticker);
+  const sectorOf = Object.fromEntries(UNIVERSE.map((u) => [u.ticker, u.sector]));
+  const peers = all.filter((x) => sectorOf[x.ticker] === r.sector);
+  const sectorRank = peers.findIndex((x) => x.ticker === r.ticker) + 1;
   const e = r.evaluation;
   const bands = Object.entries(trackRecord.bands).map(([key, outcome]) => ({ label: key.replace('-', '–'), outcome, range: trackRecord.uncertainty?.bands[key] }));
   const since = trackRecord.start.slice(0, 4);
@@ -67,7 +76,10 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
               <h2 className="panel__title">Stock score</h2>
               <ScoreRing score={e.score} />
               <p className="scorecard__label">{r.label}</p>
-              <p className="muted">Ranks {e.rank} of {e.groupSize}</p>
+              <p className="muted">
+                Ranks {e.rank} of {e.groupSize}
+                {peers.length > 1 && sectorRank > 0 && <span className="scorecard__sector">{sectorRank} of {peers.length} in {r.sector}</span>}
+              </p>
             </div>
 
             {r.trust && r.trust.outcome && (
@@ -152,8 +164,7 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
             <section className="panel" aria-labelledby="history">
               <h2 id="history">Score over time</h2>
               <p className="muted">Each month-end since {monthYear(r.history[0]?.date ?? trackRecord.start)}, using only the filings and prices public that day.</p>
-              <ScoreHistory points={r.history} ticker={r.ticker} reports={r.reports} />
-              <p className="chart__legend"><i className="chart__legend-report" aria-hidden="true" /> Annual report filed</p>
+              <HistoryChart ticker={r.ticker} score={r.history} price={r.priceHistory} reports={r.reports} />
             </section>
             <section className="panel" aria-labelledby="record">
               <h2 id="record">Track record by score</h2>
@@ -164,6 +175,7 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
           </div>
 
           <nav className="neighbours" aria-label="Nearby in the rankings">
+            <span className="neighbours__label muted small">Nearby in the rankings</span>
             {near.map((n) => (
               <Link key={n.ticker} href={`/stocks/${n.ticker}`}>
                 <span className="muted">#{n.rank}</span> <b>{n.ticker}</b> <span className="pill">{Math.round(n.score)}</span>
@@ -174,10 +186,4 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
       )}
     </article>
   );
-}
-
-async function neighbours(ticker: string) {
-  const all = await getEvaluations();
-  const i = all.findIndex((x) => x.ticker === ticker);
-  return all.slice(Math.max(0, i - 2), i + 3).filter((x) => x.ticker !== ticker);
 }

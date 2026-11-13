@@ -5,7 +5,11 @@ import { getMeta } from '@/lib/data';
 import { FACTORS } from '@/lib/engine/score';
 import { monthYear, pct, points } from '@/lib/format';
 
-export const metadata: Metadata = { title: 'Track record' };
+export const metadata: Metadata = {
+  title: 'Track record',
+  description: 'How often StockScore’s past scores beat the S&P 500 over the following year, with 95% ranges and what flatters the numbers.',
+  alternates: { canonical: '/track-record' },
+};
 
 export default async function TrackRecordPage() {
   const t = (await getMeta()).trackRecord;

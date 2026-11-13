@@ -1,5 +1,5 @@
 import type { Outcome } from '@/lib/engine/stats';
-import { monthYear, pct } from '@/lib/format';
+import { pct } from '@/lib/format';
 
 /** The score as a ring: a neutral colour on purpose, because a high score is not a "buy". */
 export function ScoreRing({ score, size = 168 }: { score: number; size?: number }) {
@@ -15,86 +15,37 @@ export function ScoreRing({ score, size = 168 }: { score: number; size?: number 
   );
 }
 
-/** Share that beat the benchmark, by score range, against the 50% a coin flip would give. */
-export function BeatChart({ rows, highlight, height = 200 }: { rows: { label: string; outcome: Outcome; range?: [number, number] }[]; highlight?: string; height?: number }) {
-  const W = 520;
-  const left = 36;
-  const top = 24;
-  const bottom = 30;
-  const H = height;
-  const plot = H - top - bottom;
+/** Share that beat the benchmark, by score range, against the 50% a coin flip would give. Plain HTML, so labels stay readable on a phone. */
+export function BeatChart({ rows, highlight }: { rows: { label: string; outcome: Outcome; range?: [number, number] }[]; highlight?: string }) {
   const max = 0.75;
-  const y = (v: number) => top + plot * (1 - v / max);
-  const step = (W - left) / rows.length;
-  const barW = Math.min(64, step * 0.6);
+  const h = (v: number) => `${(Math.min(v, max) / max) * 100}%`;
   return (
-    <figure>
-      <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={rows.map((r) => `${r.label}: ${pct(r.outcome.beat, 0)} beat the S&P 500${r.range ? `, likely between ${pct(r.range[0], 0)} and ${pct(r.range[1], 0)}` : ''}`).join('; ')}>
+    <figure className="beat">
+      <div
+        className="beat__plot"
+        role="img"
+        aria-label={rows.map((r) => `${r.label}: ${pct(r.outcome.beat, 0)} beat the S&P 500${r.range ? `, likely between ${pct(r.range[0], 0)} and ${pct(r.range[1], 0)}` : ''}`).join('; ')}
+      >
         {[0, 0.25, 0.5, 0.75].map((t) => (
-          <g key={t}>
-            <line x1={left} x2={W} y1={y(t)} y2={y(t)} className="chart__grid" />
-            <text x={left - 8} y={y(t) + 4} textAnchor="end" className="chart__axis">{t * 100}%</text>
-          </g>
+          <span key={t} className={t === 0.5 ? 'beat__tick is-coin' : 'beat__tick'} style={{ bottom: h(t) }}><i>{t * 100}%</i></span>
         ))}
-        {rows.map((r, i) => {
-          const x = left + i * step + (step - barW) / 2;
-          const on = r.label === highlight;
-          return (
-            <g key={r.label}>
-              <rect x={x} y={y(r.outcome.beat)} width={barW} height={y(0) - y(r.outcome.beat)} rx="3" className={on ? 'chart__bar is-on' : 'chart__bar'} />
-              <text x={x + barW / 2} y={y(0) - 10} textAnchor="middle" className={on ? 'chart__val is-on-ink' : 'chart__val'}>{pct(r.outcome.beat, 0)}</text>
-              {r.range && (
-                <g className="chart__range">
-                  <line x1={x + barW / 2} x2={x + barW / 2} y1={y(r.range[1])} y2={y(r.range[0])} />
-                  <line x1={x + barW / 2 - 6} x2={x + barW / 2 + 6} y1={y(r.range[1])} y2={y(r.range[1])} />
-                  <line x1={x + barW / 2 - 6} x2={x + barW / 2 + 6} y1={y(r.range[0])} y2={y(r.range[0])} />
-                </g>
-              )}
-              <text x={x + barW / 2} y={H - 8} textAnchor="middle" className="chart__axis">{r.label}</text>
-            </g>
-          );
-        })}
-        <line x1={left} x2={W} y1={y(0.5)} y2={y(0.5)} className="chart__coin" />
-      </svg>
+        <div className="beat__cols">
+          {rows.map((r) => (
+            <div key={r.label} className={r.label === highlight ? 'beat__col is-on' : 'beat__col'}>
+              <span className="beat__bar" style={{ height: h(r.outcome.beat) }}><b>{pct(r.outcome.beat, 0)}</b></span>
+              {r.range && <span className="beat__range" style={{ bottom: h(r.range[0]), height: `${((Math.min(r.range[1], max) - r.range[0]) / max) * 100}%` }} />}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="beat__labels" aria-hidden="true">
+        {rows.map((r) => <span key={r.label} className={r.label === highlight ? 'is-on' : undefined}>{r.label}</span>)}
+      </div>
       <figcaption className="chart__legend">
         <i aria-hidden="true" /> 50%: what a coin flip would give
         {rows.some((r) => r.range) && <><b className="chart__legend-range" aria-hidden="true" /> 95% range</>}
       </figcaption>
     </figure>
-  );
-}
-
-/** A company's score at every month-end, worked out with what was known then. */
-export function ScoreHistory({ points, ticker, reports = [] }: { points: { date: string; score: number }[]; ticker: string; reports?: string[] }) {
-  if (points.length < 2) return <p className="muted">Not enough history yet.</p>;
-  const W = 520;
-  const H = 180;
-  const pad = { l: 28, r: 8, t: 10, b: 26 };
-  const x = (i: number) => pad.l + (i / (points.length - 1)) * (W - pad.l - pad.r);
-  const y = (s: number) => pad.t + (1 - s / 100) * (H - pad.t - pad.b);
-  const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.score).toFixed(1)}`).join('');
-  const years = points.map((p, i) => ({ i, y: p.date.slice(0, 4), m: p.date.slice(5, 7) })).filter((p) => p.m === '01' && Number(p.y) % 2 === 0);
-  const last = points.at(-1)!;
-  return (
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${ticker} score each month from ${monthYear(points[0].date)} to ${monthYear(last.date)}; now ${Math.round(last.score)}`}>
-      {[0, 50, 100].map((s) => (
-        <g key={s}>
-          <line x1={pad.l} x2={W - pad.r} y1={y(s)} y2={y(s)} className={s === 50 ? 'chart__coin' : 'chart__grid'} />
-          <text x="0" y={y(s) + 4} className="chart__axis">{s}</text>
-        </g>
-      ))}
-      {reports.map((r) => {
-        // Place each filing between the month-ends around it.
-        const i = points.findIndex((p) => p.date >= r);
-        if (i < 0) return null;
-        return <line key={r} x1={x(i)} x2={x(i)} y1={pad.t} y2={H - pad.b} className="chart__report" />;
-      })}
-      <path d={d} className="chart__line" />
-      <circle cx={x(points.length - 1)} cy={y(last.score)} r="4.5" className="chart__dot" />
-      {years.map((p) => (
-        <text key={p.y} x={x(p.i)} y={H - 6} textAnchor="middle" className="chart__axis">{p.y}</text>
-      ))}
-    </svg>
   );
 }
 

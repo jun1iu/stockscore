@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 interface Option { ticker: string; name: string }
 
@@ -13,6 +13,19 @@ export function Search({ options, large = false }: { options: Option[]; large?: 
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+
+  // "/" jumps to the header search from anywhere, unless the reader is already typing somewhere.
+  useEffect(() => {
+    if (large) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey || el?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      e.preventDefault();
+      input.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [large]);
 
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -60,7 +73,9 @@ export function Search({ options, large = false }: { options: Option[]; large?: 
         aria-autocomplete="list"
         autoComplete="off"
         spellCheck={false}
+        enterKeyHint="go"
       />
+      {!large && !q && <kbd className="search__key" aria-hidden="true">/</kbd>}
       {open && matches.length > 0 && (
         <ul id={`${id}-list`} role="listbox" className="search__list">
           {matches.map((o, i) => (

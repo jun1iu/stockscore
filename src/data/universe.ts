@@ -78,3 +78,13 @@ export const UNIVERSE: { ticker: string; cik: number; name: string; sector: stri
 ];
 
 export const BENCHMARK = { ticker: 'SPY', name: 'S&P 500 (SPY fund)' };
+
+const BY_TICKER = new Map(UNIVERSE.map((u) => [u.ticker, u]));
+
+/**
+ * The covered company for a ticker typed in a URL, in any case, or null.
+ * Callers check this before touching cached data, so made-up tickers can't fill the cache.
+ */
+export function findCompany(raw: string): (typeof UNIVERSE)[number] | null {
+  return BY_TICKER.get(raw.trim().toUpperCase()) ?? null;
+}

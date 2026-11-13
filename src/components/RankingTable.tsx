@@ -2,70 +2,103 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import type { FactorKey } from '@/lib/engine/types';
+import { filterRows, sortRows, type Row, type SortDir, type SortKey } from '@/lib/rankings';
 
-export interface Row {
-  ticker: string;
-  name: string;
-  sector: string;
-  rank: number;
-  score: number;
-  factors: Record<FactorKey, number | null>;
-}
-
-const COLS: { key: 'score' | FactorKey; label: string }[] = [
-  { key: 'score', label: 'Score' },
-  { key: 'profitability', label: 'Profit' },
-  { key: 'growth', label: 'Growth' },
-  { key: 'value', label: 'Value' },
-  { key: 'balanceSheet', label: 'Balance' },
-  { key: 'momentum', label: 'Momentum' },
+const COLS: { key: SortKey; label: string; long: string }[] = [
+  { key: 'score', label: 'Score', long: 'score' },
+  { key: 'delta', label: 'Change', long: 'change since the previous month-end' },
+  { key: 'profitability', label: 'Profit', long: 'profitability' },
+  { key: 'growth', label: 'Growth', long: 'growth' },
+  { key: 'value', label: 'Value', long: 'value' },
+  { key: 'balanceSheet', label: 'Balance', long: 'balance sheet' },
+  { key: 'momentum', label: 'Momentum', long: 'momentum' },
 ];
+const FACTOR_COLS = COLS.slice(2);
+
+const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
 
 export function RankingTable({ rows }: { rows: Row[] }) {
-  const [sort, setSort] = useState<'score' | FactorKey>('score');
+  const [sort, setSort] = useState<SortKey>('score');
+  const [dir, setDir] = useState<SortDir>('desc');
   const [sector, setSector] = useState('All');
+  const [query, setQuery] = useState('');
   const sectors = useMemo(() => ['All', ...Array.from(new Set(rows.map((r) => r.sector))).sort()], [rows]);
-  const value = (r: Row) => (sort === 'score' ? r.score : r.factors[sort] ?? -1);
-  const shown = rows.filter((r) => sector === 'All' || r.sector === sector).sort((a, b) => value(b) - value(a));
+  const shown = useMemo(() => sortRows(filterRows(rows, sector, query), sort, dir), [rows, sector, query, sort, dir]);
+  const col = COLS.find((c) => c.key === sort)!;
+
+  const sortBy = (key: SortKey) => {
+    if (key === sort) setDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    else { setSort(key); setDir('desc'); }
+  };
 
   return (
-    <div className="panel">
-      <div className="filters" role="group" aria-label="Sector">
-        {sectors.map((s) => (
-          <button key={s} type="button" className="chip" aria-pressed={sector === s} onClick={() => setSector(s)}>{s}</button>
-        ))}
+    <div className="panel rankings">
+      <div className="rankings__tools">
+        <div className="filters" role="group" aria-label="Sector">
+          {sectors.map((s) => (
+            <button key={s} type="button" className="chip" aria-pressed={sector === s} onClick={() => setSector(s)}>{s}</button>
+          ))}
+        </div>
+        <input
+          className="rankings__find"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Filter by name or ticker"
+          aria-label="Filter by name or ticker"
+        />
       </div>
-      <div className="tablewrap">
-        <table className="table">
-          <caption className="sr-only">Companies sorted by {COLS.find((c) => c.key === sort)!.label}</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="num">Rank</th>
-              <th scope="col">Company</th>
-              {COLS.map((c) => (
-                <th key={c.key} scope="col" className="num" aria-sort={sort === c.key ? 'descending' : 'none'}>
-                  <button type="button" onClick={() => setSort(c.key)}>{c.label}{sort === c.key ? ' ↓' : ''}</button>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((r) => (
-              <tr key={r.ticker}>
-                <td className="num muted">{r.rank}</td>
-                <th scope="row">
-                  <Link href={`/stocks/${r.ticker}`}><b>{r.ticker}</b> <span className="muted">{r.name}</span></Link>
-                </th>
-                <td className="num"><span className="pill">{Math.round(r.score)}</span></td>
-                {COLS.slice(1).map((c) => (
-                  <td key={c.key} className="num">{r.factors[c.key as FactorKey] === null ? '—' : Math.round(r.factors[c.key as FactorKey]!)}</td>
+      <p className="muted small rankings__count" role="status">
+        {shown.length === rows.length ? `All ${rows.length} companies` : `${shown.length} of ${rows.length} companies`}, by {col.long}, {dir === 'desc' ? 'highest first' : 'lowest first'}.
+      </p>
+      {shown.length === 0 ? (
+        <p className="rankings__empty">
+          Nothing matches.{' '}
+          <button type="button" className="linkish" onClick={() => { setSector('All'); setQuery(''); }}>Clear the filters</button>
+        </p>
+      ) : (
+        <div className="tablewrap">
+          <table className="table table--rank">
+            <caption className="sr-only">Companies sorted by {col.long}, {dir === 'desc' ? 'highest first' : 'lowest first'}</caption>
+            <thead>
+              <tr>
+                <th scope="col" className="num">Rank</th>
+                <th scope="col" className="table__sticky">Company</th>
+                {COLS.map((c) => (
+                  <th key={c.key} scope="col" className="num" aria-sort={sort === c.key ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
+                    <button type="button" onClick={() => sortBy(c.key)} title={`Sort by ${c.long}`}>
+                      {c.label}<span className="table__arrow" aria-hidden="true">{sort === c.key ? (dir === 'desc' ? '↓' : '↑') : '↕'}</span>
+                    </button>
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {shown.map((r) => {
+                const d = r.delta === null ? null : Math.round(r.delta);
+                return (
+                  <tr key={r.ticker}>
+                    <td className="num muted">{r.rank}</td>
+                    <th scope="row" className="table__sticky">
+                      <Link href={`/stocks/${r.ticker}`}><b>{r.ticker}</b> <span className="muted">{r.name}</span></Link>
+                    </th>
+                    <td className="num"><span className="pill">{Math.round(r.score)}</span></td>
+                    <td className={`num ${d === null || Math.abs(d) < 3 ? 'muted' : d > 0 ? 'up' : 'down'}`}>{d === null ? '—' : signed(d)}</td>
+                    {FACTOR_COLS.map((c) => {
+                      const v = r.factors[c.key as keyof Row['factors']];
+                      return (
+                        <td key={c.key} className={sort === c.key ? 'num cellbar is-sorted' : 'num cellbar'}>
+                          {v === null ? '—' : <>{Math.round(v)}<i aria-hidden="true" style={{ width: `${v}%` }} /></>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

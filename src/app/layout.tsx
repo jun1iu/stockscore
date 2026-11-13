@@ -1,23 +1,39 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Link from 'next/link';
 import { Search } from '@/components/Search';
 import { NavLinks } from '@/components/NavLinks';
+import { THEME_SCRIPT, ThemeToggle } from '@/components/ThemeToggle';
+import { SITE_DESCRIPTION, SITE_URL } from '@/lib/site';
 import { UNIVERSE } from '@/data/universe';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: { default: 'StockScore', template: '%s · StockScore' },
-  description:
-    'Transparent scores for 70 large US companies from their SEC filings, shown next to the engine’s own track record. Not investment advice.',
+  metadataBase: new URL(SITE_URL),
+  title: { default: 'StockScore: a stock score that tells you how much to trust it', template: '%s · StockScore' },
+  description: SITE_DESCRIPTION,
+  applicationName: 'StockScore',
+  openGraph: { type: 'website', siteName: 'StockScore', locale: 'en_GB' },
+  twitter: { card: 'summary_large_image' },
+};
+
+export const viewport: Viewport = {
+  colorScheme: 'dark light',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#07100c' },
+    { media: '(prefers-color-scheme: light)', color: '#f5f8f6' },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   const options = UNIVERSE.map((u) => ({ ticker: u.ticker, name: u.name }));
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>
         <a className="skip" href="#main">Skip to content</a>
         <header className="topbar">
@@ -31,6 +47,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           </Link>
           <Search options={options} />
           <NavLinks />
+          <ThemeToggle />
         </header>
         <main id="main" className="main">{children}</main>
         <footer className="footer">
