@@ -33,17 +33,17 @@ Each stock page explains its move since the previous month-end: score and rank b
 
 ## Live refresh (the backend)
 
-A scheduled job on Vercel (`/api/cron/refresh`, weekdays at 07:17 UTC) keeps the data current:
+A scheduled job (`/api/cron/refresh`, weekdays at 07:17 UTC, run by cron on the home server) keeps the data current:
 
 1. **Prices** from [Massive](https://massive.com) (formerly Polygon.io). One market-wide call returns every US stock's close for a day, so all 70 companies cost one request. Splits and dividends are fetched market-wide too; dividends only for days not yet checked, kept on the snapshot.
 2. **Month-ends.** When a month ends, its last trading day's close becomes that month's price, and the total return adds the dividends paid in the month. Checked against Yahoo for October 2026: closes match exactly; total returns match within 0.05 points for 66 of 71 tickers and within 0.2 for the rest (Yahoo reinvests on the ex-date).
 3. **Splits** restate earlier prices in post-split units and extend the list used to convert filing share counts.
 4. **Annual reports.** Each company's SEC filing index is checked; only companies with a new 10-K are re-read. A report not yet in the SEC's XBRL feed waits for the next run.
-5. **Re-score and re-grade** all 70 companies, then write the snapshot to a private Vercel Blob and invalidate the cached pages.
+5. **Re-score and re-grade** all 70 companies, then write the snapshot to `data/snapshot.json` and invalidate the cached pages.
 
 Design choices: the refresh is a pure function of (old snapshot, data services, clock), so it's tested with fakes (`src/lib/pipeline/refresh.test.ts`); running it twice changes nothing; writes are conditional on the version read, so overlapping runs can't overwrite each other; requests are paced under Massive's free limit (5 a minute); and a time budget saves progress and resumes next run instead of hitting the 300-second limit. `/status` shows what each run did.
 
-Environment variables on Vercel: `MASSIVE_API_KEY`, `CRON_SECRET` (Vercel sends it to the cron route), `SEC_USER_AGENT` (the SEC asks for a name and contact email), and `BLOB_READ_WRITE_TOKEN` (added when a Blob store is connected).
+Environment variables: `MASSIVE_API_KEY`, `CRON_SECRET` (the scheduler sends it to the cron route) and `SEC_USER_AGENT` (the SEC asks for a name and contact email). See `HOSTING.md` for how it runs.
 
 ## How the engine works
 

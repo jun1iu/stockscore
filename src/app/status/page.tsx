@@ -16,7 +16,7 @@ export default async function Status() {
         <p className="eyebrow">Live refresh</p>
         <h1>Data status</h1>
         <p className="lede">
-          Every weekday a scheduled job on Vercel fetches the latest closing prices, splits and dividends from Massive, checks the SEC for
+          Every weekday a scheduled job fetches the latest closing prices, splits and dividends from Massive, checks the SEC for
           new annual reports, re-scores all 70 companies and re-runs the track record. This page shows what each run did.
         </p>
       </header>

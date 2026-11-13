@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = { title: 'API' };
 
-const BASE = 'https://stockscore-ten.vercel.app';
+const BASE = 'https://stockscore.jun-liu.net';
 
 const ENDPOINTS = [
   {

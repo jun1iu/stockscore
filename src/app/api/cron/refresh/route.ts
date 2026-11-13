@@ -8,7 +8,7 @@ export const maxDuration = 300;
 
 /**
  * GET /api/cron/refresh: run the live refresh.
- * Vercel Cron calls it daily with `Authorization: Bearer $CRON_SECRET`; the same header works by hand.
+ * The home server's weekday cron job calls it with `Authorization: Bearer $CRON_SECRET`; the same header works by hand.
  */
 export async function GET(req: Request) {
   // Trimmed on both sides: a pasted secret easily picks up a trailing newline.
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   if (!secret || !sent || sent !== secret) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const trigger = req.headers.get('user-agent')?.includes('vercel-cron') ? 'cron' : 'manual';
+  const trigger = req.headers.get('user-agent')?.includes('stockscore-cron') ? 'cron' : 'manual';
   try {
     // Leave room under the 300-second limit for the backtest and the write.
     const log = await runRefresh(trigger, { budgetMs: 200_000 });

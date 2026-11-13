@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Check /api/health
         run: |
-          status=$(curl -s -o health.json -w '%{http_code}' https://stockscore-ten.vercel.app/api/health)
+          status=$(curl -s -o health.json -w '%{http_code}' https://stockscore.jun-liu.net/api/health)
           cat health.json; echo
           if [ "$status" != "200" ]; then
             echo "::error title=StockScore data is unhealthy::$(cat health.json)"
