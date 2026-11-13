@@ -35,8 +35,8 @@ Each stock page explains its move since the previous month-end: score and rank b
 
 ## Production
 
-- **CI** (`.github/workflows/ci.yml`): types, lint, tests and a full build on every push and pull request.
-- **Health** (`/api/health`, `.github/workflows/health.yml`): 503 when prices are more than five days old or the last refresh failed; a weekday GitHub Action checks it after the refresh and fails, which emails the owner.
+- **Checks**: `npm run check` (types, lint, tests) and `npm run build` before pushing.
+- **Health** (`/api/health`): 503 when prices are more than five days old or the last refresh failed, 200 otherwise, for any uptime monitor to poll.
 - **Public API** (`/developers`): JSON for everything on the site, open CORS, cached for up to an hour.
 - **Hardening.** Security headers on every response (`next.config.ts`); tickers are checked against the list before any cached lookup, so made-up URLs can't grow the cache; the cron secret is compared in constant time.
 

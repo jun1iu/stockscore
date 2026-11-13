@@ -34,8 +34,8 @@ Kept in `deploy/env/stockscore.env` on the home server (gitignored there).
 
 ## Monitoring
 
-- `/api/health` returns 503 when data is stale or the last refresh failed. `.github/workflows/health.yml` checks it each weekday and fails (emailing the owner) on anything but 200.
-- Known issue (2026-11-12): Cloudflare's Bot Fight Mode is on for jun-liu.net and answers the GitHub runner, and other scripts calling `/api/*` from servers, with a "Just a moment..." challenge, so the health workflow fails even when the data is fine. Fix: turn Bot Fight Mode off in Cloudflare (Security → Bots); on the free plan it can't be skipped per path. Details in the homeserver repo's `deploy/TUNNEL.md`.
+- `/api/health` returns 503 when data is stale or the last refresh failed. Nothing polls it at the moment; point an uptime monitor at it to be told.
+- Cloudflare's Bot Fight Mode is on for jun-liu.net and answers scripts calling `/api/*` from servers with a "Just a moment..." challenge, so a monitor outside the home network sees a failure even when the data is fine. Fix: turn Bot Fight Mode off in Cloudflare (Security → Bots); on the free plan it can't be skipped per path. Details in the homeserver repo's `deploy/TUNNEL.md`.
 
 ## Usage to watch
 
