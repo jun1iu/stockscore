@@ -3,7 +3,7 @@
  * (on Vercel), otherwise data/snapshot.json (local runs). Writes are conditional on the version
  * read, so two overlapping refresh runs can't overwrite each other's work.
  */
-import { BlobPreconditionFailedError, get, put } from '@vercel/blob';
+import { BlobNotFoundError, BlobPreconditionFailedError, get, head, put } from '@vercel/blob';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { Snapshot } from './snapshot';
@@ -21,10 +21,20 @@ export interface Stored {
 
 export async function readSnapshot(): Promise<Stored | null> {
   if (usingBlob()) {
+    // Take the store's version tag first (the download's HTTP ETag is a different value), then the
+    // content. If a write lands in between, our content is newer than the tag and our write is
+    // refused, which is the safe direction.
+    let etag: string;
+    try {
+      etag = (await head(PATH)).etag;
+    } catch (e) {
+      if (e instanceof BlobNotFoundError) return null;
+      throw e;
+    }
     const res = await get(PATH, { access: 'private', useCache: false });
     if (!res) return null;
     const text = await new Response(res.stream).text();
-    return { snapshot: JSON.parse(text) as Snapshot, etag: res.blob.etag };
+    return { snapshot: JSON.parse(text) as Snapshot, etag };
   }
   if (!existsSync(LOCAL)) return null;
   return { snapshot: JSON.parse(readFileSync(LOCAL, 'utf8')) as Snapshot, etag: String(statSync(LOCAL).mtimeMs) };
