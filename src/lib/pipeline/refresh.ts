@@ -11,7 +11,7 @@ import type { Company, PriceHistory } from '../engine/types';
 import type { Filings, MarketData } from './clients';
 import { applySplit, lastFinal, monthEnd, setClose, type Dividend } from './prices';
 import { extractFacts } from './sec-facts';
-import { MAX_RUNS_KEPT, type RunLog, type Snapshot } from './snapshot';
+import { ENGINE_VERSION, MAX_RUNS_KEPT, type RunLog, type Snapshot } from './snapshot';
 
 export interface RefreshOptions {
   market: MarketData;
@@ -192,15 +192,16 @@ export async function refreshSnapshot(old: Snapshot, opts: RefreshOptions): Prom
   log.requests = { massive: opts.market.requests(), sec: opts.filings?.requests() ?? 0 };
 
   let snapshot: Snapshot = old;
-  if (log.ok && changed) {
+  const outdated = old.engineVersion !== ENGINE_VERSION;
+  if (log.ok && (changed || outdated)) {
     const { [opts.benchmark]: benchmark, ...stockPrices } = prices;
     const asOf = benchmark.points.at(-1)!.date;
     const { record, history } = runBacktest(companies, stockPrices as Record<string, PriceHistory>, benchmark, { start: '2012-01-01', end: asOf });
     // Dividends before the new month-end are now part of the stored prices.
     const base = lastFinal(benchmark).date;
     const dividends = dividendState && { through: dividendState.through, items: dividendState.items.filter((d) => d.exDate > base) };
-    snapshot = { ...old, asOf, builtAt: opts.now.toISOString(), source: 'refresh', companies, prices, trackRecord: record, history, dividends };
-    log.dataChanged = true;
+    snapshot = { ...old, engineVersion: ENGINE_VERSION, asOf, builtAt: opts.now.toISOString(), source: 'refresh', companies, prices, trackRecord: record, history, dividends };
+    log.dataChanged = changed;
   }
   log.finishedAt = new Date(opts.now.getTime() + (Date.now() - started)).toISOString();
   log.durationMs = Date.now() - started;

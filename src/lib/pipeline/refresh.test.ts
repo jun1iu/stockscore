@@ -4,7 +4,7 @@ import type { Filings, MarketData } from './clients';
 import { applySplit, setClose } from './prices';
 import { refreshSnapshot } from './refresh';
 import type { RawFacts } from './sec-facts';
-import type { Snapshot } from './snapshot';
+import { ENGINE_VERSION, type Snapshot } from './snapshot';
 
 const hist = (ticker: string, points: [string, number, number][]): PriceHistory => ({
   ticker,
@@ -71,7 +71,7 @@ function snapshot(): Snapshot {
     prices[t] = hist(t, [...dates.map((d, k) => [d, 50 + seed + k * 0.3, 50 + seed + k * 0.35] as [string, number, number]), ['2026-11-12', 80 + seed, 90 + seed]]);
   }
   return {
-    version: 1, asOf: '2026-11-12', builtAt: '2026-11-12T00:00:00Z', source: 'bundled', companies, prices,
+    version: 1, engineVersion: ENGINE_VERSION, asOf: '2026-11-12', builtAt: '2026-11-12T00:00:00Z', source: 'bundled', companies, prices,
     trackRecord: {} as Snapshot['trackRecord'], history: {}, runs: [],
   };
 }
@@ -156,6 +156,14 @@ describe('refresh run', () => {
     const second = await refreshSnapshot(first.snapshot, { market: fakeMarket(days), filings: null, benchmark: 'SPY', now: new Date('2026-11-29T02:00:00Z'), trigger: 'local' });
     expect(second.snapshot.prices.SPY.points.at(-1)!.date).toBe('2026-11-27');
     expect(second.snapshot.dividends?.through).toBe('2026-11-27');
+  });
+
+  it('recomputes the track record when the engine changed, even with no new data', async () => {
+    const old = { ...snapshot(), engineVersion: ENGINE_VERSION - 1 };
+    const { snapshot: s, log } = await refreshSnapshot(old, { market: fakeMarket({}), filings: null, benchmark: 'SPY', now: new Date('2026-11-13T02:00:00Z'), trigger: 'local' });
+    expect(log.dataChanged).toBe(false);
+    expect(s.engineVersion).toBe(ENGINE_VERSION);
+    expect(s.trackRecord.uncertainty).toBeDefined();
   });
 
   it('does nothing when there is no newer trading day', async () => {

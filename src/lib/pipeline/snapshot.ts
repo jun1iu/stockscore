@@ -26,6 +26,8 @@ export interface RunLog {
 
 export interface Snapshot {
   version: 1;
+  /** ENGINE_VERSION of the code that computed trackRecord and history. */
+  engineVersion?: number;
   /** Date of the latest price in the snapshot. */
   asOf: string;
   /** When this snapshot was produced. */
@@ -46,3 +48,6 @@ export interface Snapshot {
 }
 
 export const MAX_RUNS_KEPT = 30;
+
+/** Bump when the backtest's output changes shape, so the next refresh recomputes it even if no data changed. */
+export const ENGINE_VERSION = 2;
