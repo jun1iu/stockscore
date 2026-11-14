@@ -2,8 +2,30 @@
 
 import { useEffect } from 'react';
 
-const REVEAL = '.main > * > :not([data-in]), [data-anim]:not([data-in])';
+const REVEAL = '.screen > * > :not([data-in]), [data-anim]:not([data-in])';
 const SPOT = '.panel, .stat, .toplist a, .movers a, .neighbours a';
+
+const depth = (path: string) => path.split('/').filter(Boolean).length;
+let navTimer: ReturnType<typeof setTimeout> | undefined;
+
+/**
+ * Says which way the next page change travels, so the CSS can slide it like a phone app:
+ * a company page pushes in from the right, leaving it pops back, and the main sections cross-fade.
+ * The browser's own back button is left alone: phones already animate that gesture themselves.
+ */
+export function markNav(to: string) {
+  const root = document.documentElement;
+  // The home page and the main sections sit side by side; a company page is one level in.
+  const from = depth(location.pathname) > 1;
+  const next = depth(to) > 1;
+  root.setAttribute('data-nav', next ? 'forward' : from ? 'back' : 'tab');
+  clearTimeout(navTimer);
+  navTimer = setTimeout(() => {
+    // Blocks that arrived with the screen are done; the rest go back to rising in on scroll.
+    document.querySelectorAll('.screen > * > [data-in]').forEach((el) => el.setAttribute('data-skip', ''));
+    root.removeAttribute('data-nav');
+  }, 900);
+}
 
 /**
  * Page-wide motion. Marks blocks with data-in as they scroll into view (the CSS holds their
@@ -21,7 +43,7 @@ export function Motion() {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           const el = e.target as HTMLElement;
-          if (el.matches('.main > * > *')) el.style.setProperty('--stagger', String(Math.min(i++, 6)));
+          if (el.matches('.screen > * > *')) el.style.setProperty('--stagger', String(Math.min(i++, 6)));
           el.dataset.in = '';
           io.unobserve(el);
         }
@@ -51,10 +73,19 @@ export function Motion() {
     };
     document.addEventListener('pointermove', onMove, { passive: true });
 
+    const onClick = (e: MouseEvent) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !(e.target instanceof Element)) return;
+      const a = e.target.closest<HTMLAnchorElement>('a[href]');
+      if (!a || a.target || a.origin !== location.origin || a.pathname === location.pathname) return;
+      markNav(a.pathname);
+    };
+    document.addEventListener('click', onClick, true);
+
     return () => {
       io.disconnect();
       mo.disconnect();
       document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('click', onClick, true);
     };
   }, []);
   return null;
