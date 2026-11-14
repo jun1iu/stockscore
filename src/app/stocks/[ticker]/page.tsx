@@ -7,6 +7,7 @@ import { ChangePanel } from '@/components/ChangePanel';
 import { Roll } from '@/components/Roll';
 import { findCompany, UNIVERSE } from '@/data/universe';
 import { getEvaluations, getMeta, secFilingUrl, stockReport } from '@/lib/data';
+import { sectorKey } from '@/lib/sector';
 import { date, metric, money, monthYear, pct, points, signedPct, usd } from '@/lib/format';
 
 export function generateStaticParams() {
@@ -44,10 +45,10 @@ export default async function StockPage({ params }: PageProps<'/stocks/[ticker]'
   const since = trackRecord.start.slice(0, 4);
 
   return (
-    <article className="stock">
+    <article className="stock" data-sector={sectorKey(r.sector)}>
       <header className="stock__head">
         <div className="stock__id">
-          <p className="eyebrow">{r.sector}</p>
+          <p className="eyebrow"><i className="dot" aria-hidden="true" />{r.sector}</p>
           <h1><span className="stock__ticker">{r.ticker}</span> <span className="stock__name">{r.name}</span></h1>
         </div>
         {r.price && (

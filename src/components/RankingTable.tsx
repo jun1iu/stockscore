@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import { filterRows, sortRows, type Row, type SortDir, type SortKey } from '@/lib/rankings';
+import { sectorKey } from '@/lib/sector';
 
 const COLS: { key: SortKey; label: string; long: string }[] = [
   { key: 'score', label: 'Score', long: 'score' },
@@ -45,7 +46,9 @@ export function RankingTable({ rows }: { rows: Row[] }) {
       <div className="rankings__tools">
         <div className="filters" role="group" aria-label="Sector">
           {sectors.map((s) => (
-            <button key={s} type="button" className="chip" aria-pressed={sector === s} onClick={() => move(() => setSector(s))}>{s}</button>
+            <button key={s} type="button" className="chip" data-sector={s === 'All' ? undefined : sectorKey(s)} aria-pressed={sector === s} onClick={() => move(() => setSector(s))}>
+              {s !== 'All' && <i className="dot" aria-hidden="true" />}{s}
+            </button>
           ))}
         </div>
         <input
@@ -86,10 +89,10 @@ export function RankingTable({ rows }: { rows: Row[] }) {
               {shown.map((r) => {
                 const d = r.delta === null ? null : Math.round(r.delta);
                 return (
-                  <tr key={r.ticker} style={{ '--vt': `row-${r.ticker.replace(/[^A-Za-z0-9]/g, '-')}` } as CSSProperties}>
+                  <tr key={r.ticker} data-sector={sectorKey(r.sector)} style={{ '--vt': `row-${r.ticker.replace(/[^A-Za-z0-9]/g, '-')}` } as CSSProperties}>
                     <td className="num muted">{r.rank}</td>
                     <th scope="row" className="table__sticky">
-                      <Link href={`/stocks/${r.ticker}`}><b>{r.ticker}</b> <span className="muted">{r.name}</span></Link>
+                      <Link href={`/stocks/${r.ticker}`} title={r.sector}><i className="dot" aria-hidden="true" /><b>{r.ticker}</b> <span className="muted">{r.name}</span></Link>
                     </th>
                     <td className="num"><span className="pill">{Math.round(r.score)}</span></td>
                     <td className={`num ${d === null || Math.abs(d) < 3 ? 'muted' : d > 0 ? 'up' : 'down'}`}>{d === null ? '—' : signed(d)}</td>
