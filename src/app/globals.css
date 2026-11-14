@@ -1,5 +1,6 @@
-/* StockScore. Dark, quiet surfaces; one green accent for brand, links and price gains only.
-   The score itself is drawn in neutral white, because a high score is not a "buy". */
+/* StockScore. Dark, quiet surfaces, dressed like an exchange floor: a ticker tape under the header,
+   ticker symbols in board amber, figures in a fixed-width face. Green is for brand, links and price
+   gains only. The score itself is drawn in neutral white, because a high score is not a "buy". */
 :root {
   --bg: #07100c;
   --bg-2: #0b1611;
@@ -12,6 +13,7 @@
   --accent: #3ee08a;
   --accent-ink: #04140b;
   --down: #ff8f80;
+  --board: #ffb224;
   /* Derived surfaces: tints of the accent, the page glow, the sticky bar, hover and shadows. */
   --accent-soft: rgba(62, 224, 138, 0.18);
   --accent-edge: rgba(62, 224, 138, 0.55);
@@ -22,6 +24,9 @@
   --radius: 14px;
   --gutter: clamp(1rem, 3vw, 2rem);
   --font: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: var(--font-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* The lit dots of a display board, laid over dark surfaces. */
+  --dots: radial-gradient(color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1.3px) 0 0 / 4px 4px;
   /* Motion: one decisive ease for entrances, a slight overshoot for things that pop. */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --pop: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -42,6 +47,7 @@
   --accent: #0a7443;
   --accent-ink: #ffffff;
   --down: #b5382a;
+  --board: #8a5300;
   --accent-soft: rgba(10, 116, 67, 0.14);
   --accent-edge: rgba(10, 116, 67, 0.45);
   --glow: rgba(10, 116, 67, 0.07);
@@ -100,10 +106,8 @@ code { font-size: 0.9em; background: var(--panel-2); padding: 0.1em 0.35em; bord
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ---------- Top bar ---------- */
+.masthead { position: sticky; top: 0; z-index: 5; }
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
   display: flex;
   align-items: center;
   gap: clamp(0.75rem, 2.5vw, 2rem);
@@ -350,7 +354,6 @@ code { font-size: 0.9em; background: var(--panel-2); padding: 0.1em 0.35em; bord
 /* ---------- Home: facts and the 70-tile grid ---------- */
 .home__facts { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem 1.5rem; margin: 1.25rem 0 0; padding: 0; color: var(--muted); font-size: 0.9375rem; }
 .home__facts b { color: var(--text); font-variant-numeric: tabular-nums; }
-.home__gridtitle { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 0.6rem; }
 .grid70__tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
 .grid70 a { display: grid; place-content: center; justify-items: center; aspect-ratio: 1; border-radius: 6px; text-decoration: none; line-height: 1.15; font-variant-numeric: tabular-nums; outline-offset: 1px; }
 .grid70 a b { font-size: clamp(0.5625rem, 0.95vw, 0.75rem); letter-spacing: -0.01em; }
@@ -425,8 +428,70 @@ th[aria-sort]:not([aria-sort='none']) .table__arrow { opacity: 1; color: var(--a
 .table--rank td.cellbar.is-sorted { color: var(--text); font-weight: 600; }
 .cellbar.is-sorted i { background: var(--text); }
 
+/* ---------- Trading floor: the ticker tape, the clock, the board ---------- */
+/* The tape is a lit display, so it stays dark in both themes and carries its own colours. */
+.tape {
+  --t-text: #e6efe9;
+  --t-muted: #8fa399;
+  --t-line: #1f3329;
+  --t-amber: #ffb224;
+  --t-up: #3ee08a;
+  --t-down: #ff8f80;
+  display: flex;
+  height: 2.25rem;
+  background: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.3px) 0 0 / 4px 4px, #040806;
+  color: var(--t-text);
+  border-bottom: 1px solid var(--t-line);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tape .up { color: var(--t-up); }
+.tape .down { color: var(--t-down); }
+.clock, .tape__note { flex: none; display: flex; align-items: center; margin: 0; border-right: 1px solid var(--t-line); }
+.clock { gap: 0.6rem; padding: 0 1rem 0 var(--gutter); }
+.clock__lamp { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--t-muted); }
+.clock[data-open='false'] .clock__lamp { background: var(--t-down); }
+.clock[data-open='true'] .clock__lamp { background: var(--t-up); box-shadow: 0 0 0 0 var(--t-up); }
+.clock__city { color: var(--t-amber); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.clock__time { min-width: 11ch; }
+.clock__time::after { content: ' ET'; color: var(--t-muted); }
+.clock__state { font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.clock[data-open='false'] .clock__state { color: var(--t-down); }
+.clock[data-open='true'] .clock__state { color: var(--t-up); }
+.clock__next, .tape__note { color: var(--t-muted); }
+.tape__note { padding: 0 1rem; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.tape__window { flex: 1; min-width: 0; display: flex; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 1.5rem, #000 calc(100% - 1.5rem), transparent); }
+.tape__window:focus-visible { outline-offset: -2px; }
+.tape__run { flex: none; display: flex; margin: 0; padding: 0; list-style: none; }
+.tape__run a { display: flex; align-items: center; gap: 0.55rem; height: 100%; padding: 0 1.1rem; color: inherit; text-decoration: none; }
+.tape__run a:hover { background: rgba(255, 255, 255, 0.07); }
+.tape__run a:focus-visible { outline-offset: -2px; }
+.tape__run b { color: var(--t-amber); font-weight: 700; }
+/* A little bloom, as on lit tubes. */
+.tape b, .tape .up, .tape .down, .clock__city { text-shadow: 0 0 0.6em color-mix(in srgb, currentColor 45%, transparent); }
+.tape__run i { font-style: normal; font-size: 0.75em; }
+
+/* Ticker symbols and figures read like a board everywhere else too. */
+.toplist a > b, .movers a > b, .table tbody th a b, .search__list li b, .neighbours a b { font-family: var(--mono); color: var(--board); letter-spacing: -0.01em; }
+.pill, .movers__delta, .stock__quote dd, .stock__ticker, .home__facts b, .grid70 a, .ring__n, .stat b, .change__delta { font-family: var(--mono); }
+.stock__ticker, .ring__n { letter-spacing: -0.05em; }
+.stock__quote dd.up::before, .movers__delta.up::before { content: '▲ '; font-size: 0.7em; }
+.stock__quote dd.down::before, .movers__delta.down::before { content: '▼ '; font-size: 0.7em; }
+
+.board { padding: 0.9rem 1rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--dots), var(--bg-2); box-shadow: inset 0 1px 0 var(--sheen), var(--shadow); }
+.board__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.25rem 1rem; margin-bottom: 0.8rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.board__head h2 { color: var(--board); font: inherit; font-weight: 700; letter-spacing: inherit; }
+.board .grid70 a { border-radius: 3px; }
+
 /* ---------- Narrow screens ---------- */
+@media (max-width: 80rem) {
+  .clock__next { display: none; }
+}
+
 @media (max-width: 60rem) {
+  .tape__note { display: none; }
   .verdict, .two, .home__honest, .home__hero { grid-template-columns: minmax(0, 1fr); }
   .toplist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -460,6 +525,11 @@ th[aria-sort]:not([aria-sort='none']) .table__arrow { opacity: 1; color: var(--a
   .theme { margin-left: auto; }
   .nav__pill { display: none; }
   .search__key { display: none; }
+  .tape__note, .clock__city, .clock__next { display: none; }
+  /* The lamp carries open or closed; the words stay for screen readers. */
+  .clock__state { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .clock { padding-right: 0.75rem; }
+  .board { padding: 0.7rem; }
   .grid70__tiles { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .grid70 a b { font-size: 0.6875rem; }
   .grid70 a span:not(.sr-only) { font-size: 0.625rem; }
@@ -495,6 +565,7 @@ th[aria-sort]:not([aria-sort='none']) .table__arrow { opacity: 1; color: var(--a
   @keyframes drift { to { transform: translate3d(-6vmax, 4vmax, 0) rotate(8deg) scale(1.08); } }
   @keyframes pulse { to { box-shadow: 0 0 0 0.5rem transparent; } }
   @keyframes bar { 50% { transform: scaleY(0.55); } }
+  @keyframes tape { to { transform: translateX(-100%); } }
   @keyframes drop { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }
 
   .js .main > * > :not([data-in]):not(.home__hero),
@@ -502,6 +573,11 @@ th[aria-sort]:not([aria-sort='none']) .table__arrow { opacity: 1; color: var(--a
   .js [data-anim]:not([data-in]) * { animation-play-state: paused !important; }
 
   body::before { animation: drift 26s ease-in-out infinite alternate; }
+
+  /* The tape runs right to left and holds still under the pointer or keyboard focus. */
+  .tape__run { animation: tape 240s linear infinite; }
+  .tape__window:is(:hover, :focus-within) .tape__run { animation-play-state: paused; }
+  .clock[data-open='true'] .clock__lamp { animation: pulse 2s ease-out infinite; }
 
   /* Page blocks rise in one after another. */
   .main > * > :not(.home__hero) { animation: rise 0.7s var(--ease) backwards; animation-delay: calc(var(--stagger, 0) * 80ms); }
@@ -514,7 +590,7 @@ th[aria-sort]:not([aria-sort='none']) .table__arrow { opacity: 1; color: var(--a
   .home__pitch > h1 { animation: none; }
   .words > span { animation: word 0.8s var(--ease) backwards; animation-delay: calc(var(--i) * 45ms + 80ms); }
   .home__pitch .eyebrow::before { animation: pulse 2s ease-out infinite; }
-  .home__gridtitle, .grid70__legend { animation: fade 0.8s ease backwards 0.5s; }
+  .board__head, .grid70__legend { animation: fade 0.8s ease backwards 0.5s; }
   .grid70__tiles li { animation: tile 0.5s var(--pop) backwards; animation-delay: calc(var(--d) * 28ms + 0.25s); }
 
   .roll > [aria-hidden] > span { animation: roll 0.7s var(--ease) backwards; animation-delay: calc(var(--i) * 45ms + 0.15s); }
@@ -585,8 +661,14 @@ th[aria-sort]:not([aria-sort='none']) .table__arrow { opacity: 1; color: var(--a
   ::view-transition-group(*) { animation-duration: 0.45s; animation-timing-function: var(--ease); }
 }
 
+/* Without motion the tape is a strip you scroll by hand, shown once. */
+@media (prefers-reduced-motion: reduce) {
+  .tape__window { overflow-x: auto; scrollbar-width: none; }
+  .tape__run[aria-hidden] { display: none; }
+}
+
 @media print {
-  .topbar, .footer, .neighbours, .seg, .skip { display: none !important; }
+  .masthead, .footer, .neighbours, .seg, .skip { display: none !important; }
   .panel, .stat { break-inside: avoid; }
   body::before { display: none; }
   *, *::before, *::after { animation: none !important; }

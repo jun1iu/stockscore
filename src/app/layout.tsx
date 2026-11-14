@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import Link from 'next/link';
 import { Search } from '@/components/Search';
 import { NavLinks } from '@/components/NavLinks';
+import { TickerTape } from '@/components/TickerTape';
 import { Motion } from '@/components/Motion';
 import { THEME_SCRIPT, ThemeToggle } from '@/components/ThemeToggle';
 import { SITE_DESCRIPTION, SITE_URL } from '@/lib/site';
@@ -10,6 +11,8 @@ import { UNIVERSE } from '@/data/universe';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+// Tickers, prices and scores are set in a fixed-width face, like figures on an exchange board.
+const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -31,25 +34,28 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   const options = UNIVERSE.map((u) => ({ ticker: u.ticker, name: u.name }));
   return (
-    <html lang="en" className={inter.variable} data-theme="dark" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${mono.variable}`} data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>
         <a className="skip" href="#main">Skip to content</a>
-        <header className="topbar">
-          <Link href="/" className="brand" aria-label="StockScore home">
-            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
-              <rect x="1" y="11" width="4" height="8" rx="1" />
-              <rect x="8" y="6" width="4" height="13" rx="1" />
-              <rect x="15" y="1" width="4" height="18" rx="1" />
-            </svg>
-            StockScore
-          </Link>
-          <Search options={options} />
-          <NavLinks />
-          <ThemeToggle />
-        </header>
+        <div className="masthead">
+          <header className="topbar">
+            <Link href="/" className="brand" aria-label="StockScore home">
+              <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+                <rect x="1" y="11" width="4" height="8" rx="1" />
+                <rect x="8" y="6" width="4" height="13" rx="1" />
+                <rect x="15" y="1" width="4" height="18" rx="1" />
+              </svg>
+              StockScore
+            </Link>
+            <Search options={options} />
+            <NavLinks />
+            <ThemeToggle />
+          </header>
+          <TickerTape />
+        </div>
         <main id="main" className="main">{children}</main>
         <footer className="footer">
           <p>
