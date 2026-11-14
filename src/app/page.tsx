@@ -45,8 +45,11 @@ export default async function Home() {
           <li>Prices to <b>{date(meta.asOf)}</b></li>
         </ul>
         </div>
-        <div className="home__grid">
-          <h2 className="home__gridtitle">All {evaluations.length} scores today</h2>
+        <div className="home__grid board">
+          <div className="board__head">
+            <h2>The big board</h2>
+            <span>All {evaluations.length} scores today</span>
+          </div>
           <ScoreGrid tiles={evaluations.map((e) => ({ ticker: e.ticker, name: names[e.ticker], score: e.score, rank: e.rank }))} />
         </div>
       </section>

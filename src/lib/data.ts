@@ -65,6 +65,21 @@ export async function getMeta() {
   return { asOf: s.asOf, builtAt: s.builtAt, source: s.source, trackRecord: s.trackRecord, runs: s.runs };
 }
 
+/** Last close and the move since the previous month-end for every company, for the ticker tape. */
+export async function getTape() {
+  'use cache';
+  cacheLife('hours');
+  cacheTag(SNAPSHOT_TAG);
+  const s = await loadSnapshot();
+  const quotes = UNIVERSE.flatMap((u) => {
+    const points = s.prices[u.ticker]?.points ?? [];
+    const last = points.at(-1);
+    const before = points.at(-2);
+    return last ? [{ ticker: u.ticker, price: last.close, change: before ? last.adjClose / before.adjClose - 1 : null }] : [];
+  });
+  return { asOf: s.asOf, quotes };
+}
+
 export type Meta = Awaited<ReturnType<typeof getMeta>>;
 
 /**
