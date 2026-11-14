@@ -9,6 +9,7 @@ import { UNIVERSE } from '@/data/universe';
 import { getChanges, getEvaluations, getMeta } from '@/lib/data';
 import { summarize } from '@/lib/engine/explain';
 import { date, pct } from '@/lib/format';
+import { sectorKey } from '@/lib/sector';
 
 export const metadata: Metadata = { alternates: { canonical: '/' } };
 
@@ -23,6 +24,7 @@ export default async function Home() {
   const bottomFifth = t.quintiles[0];
   const since = t.start.slice(0, 4);
   const names = Object.fromEntries(UNIVERSE.map((u) => [u.ticker, u.name]));
+  const sectors = Object.fromEntries(UNIVERSE.map((u) => [u.ticker, u.sector]));
 
   return (
     <div className="home">
@@ -50,7 +52,7 @@ export default async function Home() {
             <h2>The big board</h2>
             <span>All {evaluations.length} scores today</span>
           </div>
-          <ScoreGrid tiles={evaluations.map((e) => ({ ticker: e.ticker, name: names[e.ticker], score: e.score, rank: e.rank }))} />
+          <ScoreGrid tiles={evaluations.map((e) => ({ ticker: e.ticker, name: names[e.ticker], sector: sectors[e.ticker], score: e.score, rank: e.rank }))} />
         </div>
       </section>
 
@@ -74,11 +76,11 @@ export default async function Home() {
         </div>
         <ol className="toplist" data-anim>
           {top.map((e) => (
-            <li key={e.ticker}>
+            <li key={e.ticker} data-sector={sectorKey(sectors[e.ticker])}>
               <Link href={`/stocks/${e.ticker}`}>
                 <span className="muted">{e.rank}</span>
                 <b>{e.ticker}</b>
-                <span className="toplist__name">{names[e.ticker]}</span>
+                <span className="toplist__name">{names[e.ticker]} <span className="toplist__sector">{sectors[e.ticker]}</span></span>
                 <span className="pill">{Math.round(e.score)}</span>
               </Link>
             </li>
@@ -94,7 +96,7 @@ export default async function Home() {
           </div>
           <ol className="movers" data-anim>
             {movers.map(([t, c]) => (
-              <li key={t}>
+              <li key={t} data-sector={sectorKey(sectors[t])}>
                 <Link href={`/stocks/${t}`}>
                   <b>{t}</b>
                   <span className="why">{summarize(c)}.</span>

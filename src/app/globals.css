@@ -1,6 +1,7 @@
 /* StockScore. Dark, quiet surfaces, dressed like an exchange floor: a ticker tape under the header,
    ticker symbols in board amber, figures in a fixed-width face. Green is for brand, links and price
-   gains only. The score itself is drawn in neutral white, because a high score is not a "buy". */
+   gains only. The score itself is drawn in neutral white, because a high score is not a "buy".
+   Each sector has its own hue (see "Sector colours"), worn by everything that stands for a company. */
 :root {
   --bg: #07100c;
   --bg-2: #0b1611;
@@ -18,6 +19,8 @@
   --accent-soft: rgba(62, 224, 138, 0.18);
   --accent-edge: rgba(62, 224, 138, 0.55);
   --glow: rgba(62, 224, 138, 0.08);
+  --glow-warm: rgba(255, 178, 36, 0.055);
+  --glow-cool: rgba(111, 155, 255, 0.07);
   --bar: rgba(7, 16, 12, 0.85);
   --hover: rgba(255, 255, 255, 0.03);
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
@@ -55,6 +58,8 @@
   --accent-soft: rgba(10, 116, 67, 0.14);
   --accent-edge: rgba(10, 116, 67, 0.45);
   --glow: rgba(10, 116, 67, 0.07);
+  --glow-warm: rgba(214, 138, 0, 0.07);
+  --glow-cool: rgba(36, 86, 201, 0.06);
   --bar: rgba(245, 248, 246, 0.88);
   --hover: rgba(13, 26, 19, 0.035);
   --shadow: 0 16px 40px rgba(13, 26, 19, 0.14);
@@ -80,7 +85,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* Two soft glows behind the page that drift slowly. */
+/* Soft glows behind the page that drift slowly: green, with amber and blue from the boards. */
 body::before {
   content: '';
   position: fixed;
@@ -89,7 +94,9 @@ body::before {
   pointer-events: none;
   background:
     radial-gradient(42vmax 30vmax at 72% 26%, var(--glow), transparent 70%),
-    radial-gradient(34vmax 26vmax at 22% 38%, color-mix(in srgb, var(--glow) 55%, transparent), transparent 70%);
+    radial-gradient(34vmax 26vmax at 22% 38%, color-mix(in srgb, var(--glow) 55%, transparent), transparent 70%),
+    radial-gradient(30vmax 24vmax at 84% 72%, var(--glow-warm), transparent 70%),
+    radial-gradient(32vmax 24vmax at 12% 82%, var(--glow-cool), transparent 70%);
 }
 ::selection { background: var(--accent-soft); }
 h1, h2, h3, p, figure { margin: 0; }
@@ -366,12 +373,18 @@ code { font-size: 0.9em; background: var(--panel-2); padding: 0.1em 0.35em; bord
 .grid70 a { position: relative; }
 .grid70 a:hover { outline: 2px solid var(--accent); z-index: 1; }
 /* Five neutral steps, one per fifth of the score. The two brightest flip to dark text. */
+/* On the board each tile takes its sector's hue, and the score sets how strongly it is lit. */
+[data-sector][data-step='0'] { background: color-mix(in srgb, var(--sc) 10%, var(--bg)); color: color-mix(in srgb, var(--sc) 50%, var(--muted)); }
+[data-sector][data-step='1'] { background: color-mix(in srgb, var(--sc) 22%, var(--bg)); }
+[data-sector][data-step='2'] { background: color-mix(in srgb, var(--sc) 40%, var(--bg)); }
+[data-sector][data-step='3'] { background: color-mix(in srgb, var(--sc) 82%, var(--bg)); }
+[data-sector][data-step='4'] { background: var(--sc); }
 [data-step='0'] { background: color-mix(in srgb, var(--text) 5%, var(--bg)); color: var(--muted); }
 [data-step='1'] { background: color-mix(in srgb, var(--text) 13%, var(--bg)); color: var(--text); }
 [data-step='2'] { background: color-mix(in srgb, var(--text) 26%, var(--bg)); color: var(--text); }
 [data-step='3'] { background: color-mix(in srgb, var(--text) 62%, var(--bg)); color: var(--bg); }
 [data-step='4'] { background: color-mix(in srgb, var(--text) 94%, var(--bg)); color: var(--bg); }
-.grid70__legend { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.7rem; color: var(--muted); font-size: 0.8125rem; }
+.grid70__legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.7rem; color: var(--muted); font-size: 0.8125rem; }
 .grid70__scale { display: flex; gap: 3px; }
 .grid70__scale i { width: 1.1rem; height: 0.7rem; border-radius: 3px; }
 .movers a > b { grid-area: ticker; }
@@ -432,6 +445,42 @@ th[aria-sort]:not([aria-sort='none']) .table__arrow { opacity: 1; color: var(--a
 .cellbar i { display: block; height: 3px; margin: 3px 0 0 auto; max-width: 100%; border-radius: 2px; background: var(--line-2); }
 .table--rank td.cellbar.is-sorted { color: var(--text); font-weight: 600; }
 .cellbar.is-sorted i { background: var(--text); }
+
+/* ---------- Sector colours ----------
+   One hue per sector, set by data-sector and read as --sc. None is the green of a gain or the red
+   of a fall, so colour says what kind of company it is and nothing about whether to buy it. */
+[data-sector='communication'] { --sc: #b79aff; }
+[data-sector='consumer'] { --sc: #ff8fc4; }
+[data-sector='consumer-staples'] { --sc: #ff9f5a; }
+[data-sector='energy'] { --sc: #ecd24a; }
+[data-sector='health-care'] { --sc: #46d3d9; }
+[data-sector='industrials'] { --sc: #a9b9cc; }
+[data-sector='materials'] { --sc: #cfa67e; }
+[data-sector='technology'] { --sc: #6f9bff; }
+[data-sector='utilities'] { --sc: #c3e05a; }
+:root[data-theme='light'] [data-sector='communication'] { --sc: #6b3fd4; }
+:root[data-theme='light'] [data-sector='consumer'] { --sc: #b3246c; }
+:root[data-theme='light'] [data-sector='consumer-staples'] { --sc: #a5480a; }
+:root[data-theme='light'] [data-sector='energy'] { --sc: #776200; }
+:root[data-theme='light'] [data-sector='health-care'] { --sc: #0a7780; }
+:root[data-theme='light'] [data-sector='industrials'] { --sc: #4c627a; }
+:root[data-theme='light'] [data-sector='materials'] { --sc: #7c5431; }
+:root[data-theme='light'] [data-sector='technology'] { --sc: #2456c9; }
+:root[data-theme='light'] [data-sector='utilities'] { --sc: #55730a; }
+.dot { display: inline-block; flex: none; width: 0.55rem; height: 0.55rem; margin-right: 0.45rem; border-radius: 2px; background: var(--sc, var(--muted)); }
+.sectors { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.25rem 0.9rem; margin: 0.35rem 0 0; padding: 0.6rem 0 0; border-top: 1px solid var(--line); list-style: none; }
+.sectors li { display: inline-flex; align-items: center; }
+.toplist li[data-sector] a, .movers li[data-sector] a { border-left: 3px solid var(--sc); }
+.toplist__sector { display: block; color: var(--sc); font-size: 0.75rem; }
+.stock[data-sector] .eyebrow { display: inline-flex; align-items: center; color: var(--sc); }
+.stock[data-sector] .meter__fill { background: var(--sc); }
+.chip[data-sector] { display: inline-flex; align-items: center; }
+.chip[data-sector][aria-pressed='true'] { background: var(--sc); border-color: var(--sc); }
+.chip[aria-pressed='true'] .dot { background: var(--accent-ink); }
+.table--rank tbody th a { display: flex; align-items: baseline; gap: 0.35rem; }
+.table--rank tbody th .dot { margin-right: 0.15rem; }
+tr[data-sector] .cellbar i { background: color-mix(in srgb, var(--sc) 55%, var(--line)); }
+tr[data-sector] .cellbar.is-sorted i { background: var(--sc); }
 
 /* ---------- Trading floor: the ticker tape, the clock, the board ---------- */
 /* The tape is a lit display, so it stays dark in both themes and carries its own colours. */

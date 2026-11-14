@@ -20,6 +20,7 @@ Not investment advice.
 ## Interface
 
 - **An exchange floor.** A ticker tape runs under the header on every page with each company's last close and its move this month (closing prices, not live quotes), beside a New York clock that shows whether the market is trading and counts down to the next bell, holidays and half days included (`src/lib/market.ts`). Ticker symbols are in board amber and figures in a fixed-width face; the home page grid is framed as the big board. The tape pauses under the pointer and becomes a strip you scroll by hand when motion is reduced.
+- **A colour for each sector.** The nine sectors each have a hue, defined once in `globals.css` and set with `data-sector`. On the big board a tile's hue is its sector and its strength is its score; the same hue marks the company in the top five, the biggest moves, the rankings (filter chips, rows and factor bars) and its own page. None of the hues is the green of a gain or the red of a fall, so colour says what kind of company it is, not whether to buy it.
 - **Light and dark themes.** Follows the device setting; the header switch overrides it and is remembered. An inline script sets the theme before first paint, so there is no flash.
 - **Readable on a phone.** Charts are drawn at their real width (the bar chart is plain HTML), so labels never shrink; the rankings keep the company column in place while the factors scroll.
 - **Keyboard.** `/` focuses search, the history chart reads out each month with the arrow keys, and every control has a visible focus ring.
